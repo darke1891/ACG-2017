@@ -19,6 +19,7 @@
 #pragma once
 
 #include <nori/mesh.h>
+#include <vector>
 
 NORI_NAMESPACE_BEGIN
 
@@ -65,9 +66,27 @@ public:
      */
     bool rayIntersect(const Ray3f &ray, Intersection &its, bool shadowRay) const;
 
+
 private:
     Mesh         *m_mesh = nullptr; ///< Mesh (only a single one for now)
     BoundingBox3f m_bbox;           ///< Bounding box of the entire scene
+    class OctreeNode;
+    OctreeNode       *m_octree = nullptr;
+};
+
+class Accel::OctreeNode {
+public:
+    void setMesh (Mesh *mesh); ///< This function should only be called for root node.
+    void splitNode (Mesh *mesh, uint32_t depth, bool full=true);
+    void nullTemp();
+    void makeLeaf();
+    bool rayIntersect(Mesh *mesh, Ray3f &ray, Intersection &its, uint32_t &f, bool shadowRay) const;
+    OctreeNode *children = nullptr;
+private:
+    BoundingBox3f m_bbox;           ///< Bounding box of the octree node
+    std::vector<uint32_t> *temp_triangles = nullptr;
+    uint32_t num_triangle = 0;
+    uint32_t *triangles = nullptr;
 };
 
 NORI_NAMESPACE_END

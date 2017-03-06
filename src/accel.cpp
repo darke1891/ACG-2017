@@ -18,8 +18,15 @@
 
 #include <nori/accel.h>
 #include <Eigen/Geometry>
+#include <nori/timer.h>
+#include "tbb/parallel_invoke.h"
+#include <algorithm>
 
 NORI_NAMESPACE_BEGIN
+
+#define ACCEL_OCTREE_ON 1
+#define ACCEL_OCTREENODE_IMPROVED_TRAVERSAL 1
+#define ACCEL_OCTREE_PARALLEL_CONSTRUCTION 0
 
 void Accel::addMesh(Mesh *mesh) {
     if (m_mesh)
@@ -30,6 +37,16 @@ void Accel::addMesh(Mesh *mesh) {
 
 void Accel::build() {
     /* Nothing to do here for now */
+    Timer timer;
+    m_octree = new OctreeNode();
+    m_octree->setMesh(m_mesh);
+    #if ACCEL_OCTREE_PARALLEL_CONSTRUCTION == 1
+        m_octree->splitNode(m_mesh, 0, false);
+    #else
+        m_octree->splitNode(m_mesh, 0);
+    #endif
+
+    cout << "It took " << timer.elapsedString() << " to construct octree" << endl;
 }
 
 bool Accel::rayIntersect(const Ray3f &ray_, Intersection &its, bool shadowRay) const {
@@ -38,21 +55,29 @@ bool Accel::rayIntersect(const Ray3f &ray_, Intersection &its, bool shadowRay) c
 
     Ray3f ray(ray_); /// Make a copy of the ray (we will need to update its '.maxt' value)
 
-    /* Brute force search through all triangles */
-    for (uint32_t idx = 0; idx < m_mesh->getTriangleCount(); ++idx) {
-        float u, v, t;
-        if (m_mesh->rayIntersect(idx, ray, u, v, t)) {
-            /* An intersection was found! Can terminate
-               immediately if this is a shadow ray query */
-            if (shadowRay)
-                return true;
-            ray.maxt = its.t = t;
-            its.uv = Point2f(u, v);
-            its.mesh = m_mesh;
-            f = idx;
-            foundIntersection = true;
+
+
+    #if ACCEL_OCTREE_ON == 0
+        /* Brute force search through all triangles */
+        for (uint32_t idx = 0; idx < m_mesh->getTriangleCount(); ++idx) {
+            float u, v, t;
+            if (m_mesh->rayIntersect(idx, ray, u, v, t)) {
+                /* An intersection was found! Can terminate
+                   immediately if this is a shadow ray query */
+                if (shadowRay)
+                    return true;
+                ray.maxt = its.t = t;
+                its.uv = Point2f(u, v);
+                its.mesh = m_mesh;
+                f = idx;
+                foundIntersection = true;
+            }
         }
-    }
+    #else
+        foundIntersection = m_octree->rayIntersect(m_mesh, ray, its, f, shadowRay);
+        if (shadowRay && foundIntersection)
+            return true;
+    #endif
 
     if (foundIntersection) {
         /* At this point, we now know that there is an intersection,
@@ -109,6 +134,131 @@ bool Accel::rayIntersect(const Ray3f &ray_, Intersection &its, bool shadowRay) c
 
     return foundIntersection;
 }
+
+bool Accel::OctreeNode::rayIntersect(Mesh *mesh, Ray3f &ray, Intersection &its, uint32_t &f, bool shadowRay) const{
+    bool foundIntersection = false;  // Was an intersection found so far?
+
+    if (children != nullptr) {
+        std::pair<float, uint32_t> to_search[8];
+        float u, v;
+        for (uint32_t idx = 0; idx < 8; idx++) {
+            to_search[idx] = std::make_pair(ray.maxt, 8);
+            if (children[idx].m_bbox.rayIntersect(ray, u, v))
+                if (ray.mint <= v && u <= ray.maxt)
+                    to_search[idx] = std::make_pair(u, idx);
+        }
+
+        #if ACCEL_OCTREENODE_IMPROVED_TRAVERSAL == 1
+            std::sort(to_search, to_search + 8);
+        #endif
+
+        for (uint32_t i = 0; i < 8; i++)
+            if (to_search[i].second < 8)
+                if (children[to_search[i].second].rayIntersect(mesh, ray, its, f, shadowRay)) {
+                    #if ACCEL_OCTREENODE_IMPROVED_TRAVERSAL == 1
+                        return true;
+                    #else
+                        if (shadowRay)
+                            return true;
+                        foundIntersection = true;
+                    #endif
+                }
+    }
+
+    if (triangles != nullptr)
+        for (uint32_t i = 0; i < num_triangle; i++) {
+            uint32_t idx = triangles[i];
+            float u, v, t;
+            if (mesh->rayIntersect(idx, ray, u, v, t)) {
+                /* An intersection was found! Can terminate
+                   immediately if this is a shadow ray query */
+                if (shadowRay)
+                    return true;
+                ray.maxt = its.t = t;
+                its.uv = Point2f(u, v);
+                its.mesh = mesh;
+                f = idx;
+                foundIntersection = true;
+            }
+        }
+
+    return foundIntersection;
+}
+
+void Accel::OctreeNode::splitNode (Mesh *mesh, uint32_t depth, bool full) {
+    if (temp_triangles == nullptr)
+        return;
+
+    uint32_t num = temp_triangles->size();
+    if ((num < 10) || (depth >= 10)) {
+        makeLeaf();
+        return;
+    }
+    
+    children = new OctreeNode[8];
+    bool sameChild = true;
+
+    for (uint32_t i=0; i<8; i++) {
+        BoundingBox3f child_bbox(m_bbox.getCorner(i));
+        child_bbox.expandBy(m_bbox.getCenter());
+        std::vector<uint32_t> *child_triangles = new std::vector<uint32_t>;
+        child_triangles->clear();
+        for (auto idx: *temp_triangles)
+            if (child_bbox.overlaps(mesh->getBoundingBox(idx)))
+                child_triangles->push_back(idx);
+        if (child_triangles->size() != temp_triangles->size())
+            sameChild = false;
+        children[i].m_bbox = child_bbox;
+        children[i].temp_triangles = child_triangles;
+    }
+    if (sameChild) {
+        delete []children;
+        children = nullptr;
+        makeLeaf();
+    }
+    else {
+        nullTemp();
+        if (full || num < 50)
+            for (uint32_t i=0; i<8; i++)
+                children[i].splitNode(mesh, depth + 1, true);
+        else {
+            tbb::parallel_invoke([=]{children[0].splitNode(mesh, depth + 1, full);},
+                                 [=]{children[1].splitNode(mesh, depth + 1, full);},
+                                 [=]{children[2].splitNode(mesh, depth + 1, full);},
+                                 [=]{children[3].splitNode(mesh, depth + 1, full);},
+                                 [=]{children[4].splitNode(mesh, depth + 1, full);},
+                                 [=]{children[5].splitNode(mesh, depth + 1, full);},
+                                 [=]{children[6].splitNode(mesh, depth + 1, full);},
+                                 [=]{children[7].splitNode(mesh, depth + 1, full);}
+                                 );
+        }
+    }
+}
+
+void Accel::OctreeNode::makeLeaf() {
+    num_triangle = temp_triangles->size();
+    if (num_triangle > 0) {
+        triangles = new uint32_t[num_triangle];
+        for (uint32_t i=0; i<num_triangle; i++)
+            triangles[i] = (*temp_triangles)[i];
+    }
+    nullTemp();
+}
+
+void Accel::OctreeNode::setMesh (Mesh *mesh) {
+    temp_triangles = new std::vector<uint32_t>;
+    temp_triangles->clear();
+    for (uint32_t idx = 0; idx < mesh->getTriangleCount(); ++idx)
+        temp_triangles->push_back(idx);
+    m_bbox = mesh->getBoundingBox();
+}
+
+
+void Accel::OctreeNode::nullTemp() {
+    delete temp_triangles;
+    temp_triangles = nullptr;
+}
+
 
 NORI_NAMESPACE_END
 
