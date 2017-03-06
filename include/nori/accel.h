@@ -81,9 +81,12 @@ public:
     void nullTemp();
     void makeLeaf();
     bool rayIntersect(Mesh *mesh, Ray3f &ray, Intersection &its, uint32_t &f, bool shadowRay) const;
-    OctreeNode *children = nullptr;
+    uint32_t countInteriorNode();
+    uint32_t countLeafNode();
+    uint32_t countTrianglesOnLeaf();
 private:
     BoundingBox3f m_bbox;           ///< Bounding box of the octree node
+    OctreeNode *children = nullptr;
     std::vector<uint32_t> *temp_triangles = nullptr;
     uint32_t num_triangle = 0;
     uint32_t *triangles = nullptr;

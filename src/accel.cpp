@@ -26,7 +26,8 @@ NORI_NAMESPACE_BEGIN
 
 #define ACCEL_OCTREE_ON 1
 #define ACCEL_OCTREENODE_IMPROVED_TRAVERSAL 1
-#define ACCEL_OCTREE_PARALLEL_CONSTRUCTION 0
+#define ACCEL_OCTREE_PARALLEL_CONSTRUCTION 1
+#define ACCEL_OCTREE_COLLAPSE_REPEAT 0
 
 void Accel::addMesh(Mesh *mesh) {
     if (m_mesh)
@@ -47,6 +48,9 @@ void Accel::build() {
     #endif
 
     cout << "It took " << timer.elapsedString() << " to construct octree" << endl;
+    //cout << m_octree->countInteriorNode() << ' ';
+    //cout << m_octree->countLeafNode() << ' ';
+    //cout << m_octree->countTrianglesOnLeaf() << endl;
 }
 
 bool Accel::rayIntersect(const Ray3f &ray_, Intersection &its, bool shadowRay) const {
@@ -153,7 +157,7 @@ bool Accel::OctreeNode::rayIntersect(Mesh *mesh, Ray3f &ray, Intersection &its, 
         #endif
 
         for (uint32_t i = 0; i < 8; i++)
-            if (to_search[i].second < 8)
+            if (to_search[i].second < 8) {
                 if (children[to_search[i].second].rayIntersect(mesh, ray, its, f, shadowRay)) {
                     #if ACCEL_OCTREENODE_IMPROVED_TRAVERSAL == 1
                         return true;
@@ -163,6 +167,7 @@ bool Accel::OctreeNode::rayIntersect(Mesh *mesh, Ray3f &ray, Intersection &its, 
                         foundIntersection = true;
                     #endif
                 }
+            }
     }
 
     if (triangles != nullptr)
@@ -189,8 +194,8 @@ void Accel::OctreeNode::splitNode (Mesh *mesh, uint32_t depth, bool full) {
     if (temp_triangles == nullptr)
         return;
 
-    uint32_t num = temp_triangles->size();
-    if ((num < 10) || (depth >= 10)) {
+    num_triangle = temp_triangles->size();
+    if ((num_triangle < 10) || (depth > 9)) {
         makeLeaf();
         return;
     }
@@ -212,13 +217,19 @@ void Accel::OctreeNode::splitNode (Mesh *mesh, uint32_t depth, bool full) {
         children[i].temp_triangles = child_triangles;
     }
     if (sameChild) {
+        for (uint32_t i=0; i<8; i++)
+            children[i].nullTemp();
+
         delete []children;
         children = nullptr;
         makeLeaf();
     }
     else {
-        nullTemp();
-        if (full || num < 50)
+        #if ACCEL_OCTREE_COLLAPSE_REPEAT == 0
+            nullTemp();
+        #endif
+
+        if (full || num_triangle < 50)
             for (uint32_t i=0; i<8; i++)
                 children[i].splitNode(mesh, depth + 1, true);
         else {
@@ -232,16 +243,34 @@ void Accel::OctreeNode::splitNode (Mesh *mesh, uint32_t depth, bool full) {
                                  [=]{children[7].splitNode(mesh, depth + 1, full);}
                                  );
         }
+
+        #if ACCEL_OCTREE_COLLAPSE_REPEAT == 1
+            bool collapse = true;
+            for (uint32_t i = 0; (i < 8) && collapse; i++){
+                if (children[i].children != nullptr)
+                    collapse = false;
+                if ((children[i].num_triangle > 0) && (children[i].num_triangle < num_triangle))
+                    collapse = false;
+            }
+            if (collapse) {
+                for (uint32_t i = 0; i < 8; i++)
+                    if (children[i].triangles != nullptr)
+                        delete []children[i].triangles;
+                delete []children;
+                children = nullptr;
+                makeLeaf();
+                cout << "collapse" << endl;
+            }
+            else
+                nullTemp();
+        #endif
     }
 }
 
 void Accel::OctreeNode::makeLeaf() {
-    num_triangle = temp_triangles->size();
-    if (num_triangle > 0) {
-        triangles = new uint32_t[num_triangle];
-        for (uint32_t i=0; i<num_triangle; i++)
-            triangles[i] = (*temp_triangles)[i];
-    }
+    triangles = new uint32_t[num_triangle];
+    for (uint32_t i=0; i<num_triangle; i++)
+        triangles[i] = (*temp_triangles)[i];
     nullTemp();
 }
 
@@ -259,6 +288,37 @@ void Accel::OctreeNode::nullTemp() {
     temp_triangles = nullptr;
 }
 
+uint32_t Accel::OctreeNode::countInteriorNode() {
+    if (children != nullptr) {
+        uint32_t result = 1;
+        for (uint32_t i = 0; i < 8; i++)
+            result += children[i].countInteriorNode();
+        return result;
+    }
+    else
+        return 0;
+}
+
+uint32_t Accel::OctreeNode::countLeafNode() {
+    if (children != nullptr) {
+        uint32_t result = 0;
+        for (uint32_t i = 0; i < 8; i++)
+            result += children[i].countLeafNode();
+        return result;
+    }
+    else
+        return 1;
+}
+
+uint32_t Accel::OctreeNode::countTrianglesOnLeaf() {
+    if (children != nullptr) {
+        uint32_t result = 0;
+        for (uint32_t i = 0; i < 8; i++)
+            result += children[i].countTrianglesOnLeaf();
+        return result;
+    }
+    return num_triangle;
+}
 
 NORI_NAMESPACE_END
 
