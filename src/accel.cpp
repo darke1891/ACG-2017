@@ -19,6 +19,7 @@
 #include <nori/accel.h>
 #include <Eigen/Geometry>
 #include <nori/timer.h>
+#include "tbb/tbb.h"
 #include "tbb/parallel_invoke.h"
 #include <algorithm>
 
@@ -28,6 +29,7 @@ NORI_NAMESPACE_BEGIN
 #define ACCEL_OCTREENODE_IMPROVED_TRAVERSAL 1
 #define ACCEL_OCTREE_PARALLEL_CONSTRUCTION 1
 #define ACCEL_OCTREE_COLLAPSE_REPEAT 0
+// use macro to control the optimization option while not influencing real code
 
 void Accel::addMesh(Mesh *mesh) {
     if (m_mesh)
@@ -40,12 +42,20 @@ void Accel::build() {
     /* Nothing to do here for now */
     Timer timer;
     m_octree = new OctreeNode();
+    uint32_t num_face = m_mesh->getTriangleCount();
+    BoundingBox3f *faces = new BoundingBox3f[num_face];
+    // precompute bounding boxes of faces, so they don't need to be calculated several times
     m_octree->setMesh(m_mesh);
     #if ACCEL_OCTREE_PARALLEL_CONSTRUCTION == 1
-        m_octree->splitNode(m_mesh, 0, false);
+        tbb::parallel_for(uint32_t(0), num_face, [&](uint32_t i){faces[i] = m_mesh->getBoundingBox(i);});
+        m_octree->splitNode(faces, 0, false);
     #else
-        m_octree->splitNode(m_mesh, 0);
+        for (uint32_t i = 0; i < num_face; i++)
+            faces[i] = m_mesh->getBoundingBox(i);
+        m_octree->splitNode(faces, 0);
     #endif
+
+    delete []faces;
 
     cout << "It took " << timer.elapsedString() << " to construct octree" << endl;
     //cout << m_octree->countInteriorNode() << ' ';
@@ -149,6 +159,7 @@ bool Accel::OctreeNode::rayIntersect(Mesh *mesh, Ray3f &ray, Intersection &its, 
             to_search[idx] = std::make_pair(ray.maxt, 8);
             if (children[idx].m_bbox.rayIntersect(ray, u, v))
                 if (ray.mint <= v && u <= ray.maxt)
+                    //rayIntersect(ray, u, v) return true in the end, so we need to check this
                     to_search[idx] = std::make_pair(u, idx);
         }
 
@@ -160,6 +171,7 @@ bool Accel::OctreeNode::rayIntersect(Mesh *mesh, Ray3f &ray, Intersection &its, 
             if (to_search[i].second < 8) {
                 if (children[to_search[i].second].rayIntersect(mesh, ray, its, f, shadowRay)) {
                     #if ACCEL_OCTREENODE_IMPROVED_TRAVERSAL == 1
+                        // When we improve the traversal, the first intersection we find is always the nearest one.
                         return true;
                     #else
                         if (shadowRay)
@@ -170,13 +182,12 @@ bool Accel::OctreeNode::rayIntersect(Mesh *mesh, Ray3f &ray, Intersection &its, 
             }
     }
 
+    // Code below is from the original ray intersection check.
     if (triangles != nullptr)
         for (uint32_t i = 0; i < num_triangle; i++) {
             uint32_t idx = triangles[i];
             float u, v, t;
             if (mesh->rayIntersect(idx, ray, u, v, t)) {
-                /* An intersection was found! Can terminate
-                   immediately if this is a shadow ray query */
                 if (shadowRay)
                     return true;
                 ray.maxt = its.t = t;
@@ -190,9 +201,10 @@ bool Accel::OctreeNode::rayIntersect(Mesh *mesh, Ray3f &ray, Intersection &its, 
     return foundIntersection;
 }
 
-void Accel::OctreeNode::splitNode (Mesh *mesh, uint32_t depth, bool full) {
+void Accel::OctreeNode::splitNode (BoundingBox3f *faces, uint32_t depth, bool full) {
     if (temp_triangles == nullptr)
         return;
+    // temp_triangles and m_bbox should always be prepared now.
 
     num_triangle = temp_triangles->size();
     if ((num_triangle < 10) || (depth > 9)) {
@@ -209,7 +221,7 @@ void Accel::OctreeNode::splitNode (Mesh *mesh, uint32_t depth, bool full) {
         std::vector<uint32_t> *child_triangles = new std::vector<uint32_t>;
         child_triangles->clear();
         for (auto idx: *temp_triangles)
-            if (child_bbox.overlaps(mesh->getBoundingBox(idx)))
+            if (child_bbox.overlaps(faces[idx]))
                 child_triangles->push_back(idx);
         if (child_triangles->size() != temp_triangles->size())
             sameChild = false;
@@ -217,6 +229,8 @@ void Accel::OctreeNode::splitNode (Mesh *mesh, uint32_t depth, bool full) {
         children[i].temp_triangles = child_triangles;
     }
     if (sameChild) {
+        // if all children nodes have same number of triangles as parent node
+        // remove them and make parent node leaf node to avoid repetition
         for (uint32_t i=0; i<8; i++)
             children[i].nullTemp();
 
@@ -230,21 +244,24 @@ void Accel::OctreeNode::splitNode (Mesh *mesh, uint32_t depth, bool full) {
         #endif
 
         if (full || num_triangle < 50)
+            // When number of triangle is small, we can process the node serially
+            // When we construct octree in parallel, full is false
             for (uint32_t i=0; i<8; i++)
-                children[i].splitNode(mesh, depth + 1, true);
+                children[i].splitNode(faces, depth + 1, true);
         else {
-            tbb::parallel_invoke([=]{children[0].splitNode(mesh, depth + 1, full);},
-                                 [=]{children[1].splitNode(mesh, depth + 1, full);},
-                                 [=]{children[2].splitNode(mesh, depth + 1, full);},
-                                 [=]{children[3].splitNode(mesh, depth + 1, full);},
-                                 [=]{children[4].splitNode(mesh, depth + 1, full);},
-                                 [=]{children[5].splitNode(mesh, depth + 1, full);},
-                                 [=]{children[6].splitNode(mesh, depth + 1, full);},
-                                 [=]{children[7].splitNode(mesh, depth + 1, full);}
+            tbb::parallel_invoke([=]{children[0].splitNode(faces, depth + 1, full);},
+                                 [=]{children[1].splitNode(faces, depth + 1, full);},
+                                 [=]{children[2].splitNode(faces, depth + 1, full);},
+                                 [=]{children[3].splitNode(faces, depth + 1, full);},
+                                 [=]{children[4].splitNode(faces, depth + 1, full);},
+                                 [=]{children[5].splitNode(faces, depth + 1, full);},
+                                 [=]{children[6].splitNode(faces, depth + 1, full);},
+                                 [=]{children[7].splitNode(faces, depth + 1, full);}
                                  );
         }
 
         #if ACCEL_OCTREE_COLLAPSE_REPEAT == 1
+        // This is not a good choice, so I don't do it actually.
             bool collapse = true;
             for (uint32_t i = 0; (i < 8) && collapse; i++){
                 if (children[i].children != nullptr)

@@ -77,7 +77,7 @@ private:
 class Accel::OctreeNode {
 public:
     void setMesh (Mesh *mesh); ///< This function should only be called for root node.
-    void splitNode (Mesh *mesh, uint32_t depth, bool full=true);
+    void splitNode (BoundingBox3f *faces, uint32_t depth, bool full=true);
     void nullTemp();
     void makeLeaf();
     bool rayIntersect(Mesh *mesh, Ray3f &ray, Intersection &its, uint32_t &f, bool shadowRay) const;
