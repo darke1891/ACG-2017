@@ -36,9 +36,10 @@ private:
 
   Before a octree node is processed, `m_bbox` and `temp_triangles` should be set correctly. What's more, I need to provide depth of the node, and mesh for this tree.
 
-  Then, I just need to split the bounding box and get eight children. I can put triangles into corresponding child or children, and prepare to process child nodes later.
+  Then, I just need to split the bounding box and get eight children. I can check if bounding box of a triangle overlaps bounding box of a child node and put triangles into corresponding child or children, then prepare to process child nodes later. This check is not strict, and causes many repetition. However, it wastes some memory, but don't influence speed of rendering too much.
 
-  If the depth is more than 9 or number of triangles in this bounding box is less than 10, I can stop and make a leaf node.
+  If the depth is more than 7 or number of triangles in this bounding box is less than 10, I can stop and make a leaf node. I also try 6, 8 and 9 as the threshold of 
+depth limitation, and 7 is a good choice which balances speed of tree construction and rendering in this case.
 
 * Q1: As we can see, I store bounding box of the node and number of triangles in this node in octree node.
 
@@ -58,17 +59,17 @@ private:
 
   In conclusion, a parent node occupies 56 bytes, and a leaf node occupies `56 + num_triangle * 4` bytes.
 
-* Q3: I run the serial construction 5 times, and it takes 995ms in average.
+* Q3: I run the serial construction 5 times, and it takes 678ms in average.
 
   I do something to prevent too many repeated nodes, so the result can be a little different from other implementation.
 
-  In my implementation, octree for `ajax.obj` has 216057 interior nodes and 1512400 leaf nodes.
+  In my implementation, octree for `ajax.obj` has 88863 interior nodes and 622042 leaf nodes.
 
-  On leaf nodes, there are 6046707 faces, and average number of triangles per leaf nodes is about 4. Another interesting things is that we have 544566 faces actually, so we have 11.1 times faces on leaf nodes.
+  On leaf nodes, there are 2949949 faces, and average number of triangles per leaf nodes is about 4.74. Another interesting things is that we have 544566 faces actually, so we have 5.4 times faces on leaf nodes.
 
 * Actually I do something to stop meaningless repetition.
 
-  One useful thing is that, if all children nodes have the same number of triangles as parent node, all children nodes are removed, and the parent node becomes a leaf node. I actually do this in my implementation. 
+  One useful optimization is that, if all children nodes have the same number of triangles as parent node, all children nodes are removed, and the parent node becomes a leaf node. I actually do this in my implementation. 
 
   Another stretegy is that, if all children nodes are leaf nodes, and number of triangles are the same as parent node or 0, all children nodes are removed, and parent node becomes a leaf node. I have tried this strategy, but this performs worse in rendering. Maybe the reason is that some rays can go through empty children.
 
@@ -106,9 +107,9 @@ Part 3: Improved ray traversal
 
 * Q2: I run the program 5 times with original xml file, and use average time as result.
 
-  The improved version takes 10.3s.
+  The improved version takes 8.8s.
 
-* Q3: The improved version gives about 1.8x speed-up compared to original octree algorithm.
+* Q3: The improved version gives about 2.1x speed-up compared to original octree algorithm.
 
 Bonus: Hacker Points, Parallel Octree Construction
 ==================================================
@@ -119,7 +120,7 @@ Bonus: Hacker Points, Parallel Octree Construction
 
   I also use `parallel_for` to parallelize precomputing of face bounding boxes.
 
-* I run the program 5 times, and average time of octree construction is 561ms. Compared to 995ms, which serial construction takes, the parallized version gives about 1.77x speed-up.
+* I run the program 5 times, and average time of octree construction is 381ms. Compared to 678ms, which serial construction takes, the parallized version gives about 1.78x speed-up.
 
 <!--- 
   Markdeep & image comparison library - probably no need to change anything below

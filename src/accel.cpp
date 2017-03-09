@@ -58,9 +58,9 @@ void Accel::build() {
     delete []faces;
 
     cout << "It took " << timer.elapsedString() << " to construct octree" << endl;
-    //cout << m_octree->countInteriorNode() << ' ';
-    //cout << m_octree->countLeafNode() << ' ';
-    //cout << m_octree->countTrianglesOnLeaf() << endl;
+    cout << m_octree->countInteriorNode() << ' ';
+    cout << m_octree->countLeafNode() << ' ';
+    cout << m_octree->countTrianglesOnLeaf() << endl;
 }
 
 bool Accel::rayIntersect(const Ray3f &ray_, Intersection &its, bool shadowRay) const {
@@ -207,10 +207,11 @@ void Accel::OctreeNode::splitNode (BoundingBox3f *faces, uint32_t depth, bool fu
     // temp_triangles and m_bbox should always be prepared now.
 
     num_triangle = temp_triangles->size();
-    if ((num_triangle < 10) || (depth > 9)) {
+    if ((num_triangle < 10) || (depth > 7)) {
         makeLeaf();
         return;
     }
+
     
     children = new OctreeNode[8];
     bool sameChild = true;
