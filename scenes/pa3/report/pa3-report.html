@@ -1,0 +1,113 @@
+**Programming Assignment 3 - Hao Sun**
+
+Feedback
+========
+
+* I spent two hours to implement sample warping part and write report.
+
+Part 1: Monte Carlo Sampling
+===========================
+
+Tent
+--------------------------
+It's clear that $ p_1(x) $ and $ p_1(y) $ don't influence each other, so one choice for this sampling is that $ wrap((x, y)) = (P_1^{-1}(x), P_1^{-1}(y)) $. As we know $ p_1(x) = \begin{cases}
+                   1-|x|, & -1\le x\le 1\\
+                   0,&\text{otherwise}\\
+                   \end{cases} $
+
+So $ P_1(x) = \begin{cases}
+              x + \frac{1}{2} x^2 + c_1, & -1\le x < 0 \\
+              x - \frac{1}{2} x^2 + c_2, & 0\le x\le 1\\
+              0,&\text{otherwise}\\
+              \end{cases} $
+
+The boundary conditions are $ P_1(-1) = 0 $, $ P_1(1) = 1 $ and continuity conditions, so we can get that $ c_1 = \frac{1}{2} $ and $ c_2 = \frac{1}{2} $.
+
+Then we get $ P_1(x) = \begin{cases}
+                       x + \frac{1}{2} x^2 + \frac{1}{2}, & -1\le x < 0 \\
+                       x - \frac{1}{2} x^2 + \frac{1}{2}, & 0\le x\le 1\\
+                       0,&\text{otherwise}\\
+                       \end{cases} $
+
+
+\begin{equation*}
+P_1^{-1}(t) = \begin{cases}
+                    -1 + \sqrt{2t}, & 0\le t < \frac{1}{2} \\
+                    1 - \sqrt{2(1-t)}, & \frac{1}{2}\le t\le 1\\
+                    0,&\text{otherwise}\\
+                    \end{cases}
+\end{equation*}
+
+![$ \chi ^2 $ test for squareToTent](images/tent.png)
+
+Uniform Disk
+-----------------------------------------------------------
+\begin{equation*}
+p(x, y) = \begin{cases}
+           \frac{1}{\pi}, & x^2 + y^2 \le 1 \\
+           0, & \text{otherwise} \\
+           \end{cases}
+\end{equation*}
+
+Wrap function is $$ \theta = 2 \pi x,\ r = \sqrt{y}, \text{ and } wrap((x, y)) = (r \sin{\theta}, r \cos{\theta}) $$
+
+![$ \chi ^2 $ test for uniform disk](images/uniform_disk.png)
+
+Uniform Sphere
+-----------------------------------------------------------
+\begin{equation*}
+p(x, y, z) = \begin{cases}
+               \frac{1}{4\pi}, & x^2 + y^2 + z^2 \le 1 \\
+               0, & \text{otherwise} \\
+               \end{cases}
+\end{equation*}
+
+
+Wrap function is $$ \theta = 2 \pi x,\ h = 2 y - 1,\ r = \sqrt{1 - h^2}, \text{ and } wrap((x, y)) = (r \cos{\theta}, r \sin{\theta}, h) $$
+
+![$ \chi ^2 $ test for uniform sphere](images/uniform_sphere.png)
+
+Uniform Hemisphere
+-----------------------------------------------------------
+\begin{equation*}
+p(x, y, z) = \begin{cases}
+               \frac{1}{2\pi}, & x^2 + y^2 + z^2 \le 1, \text{and} z \ge 0\\
+               0, & \text{otherwise} \\
+               \end{cases}
+\end{equation*}
+
+Wrap function is $$ \theta = 2 \pi x,\ h = y,\ r = \sqrt{1 - h^2}, \text{ and } wrap((x, y)) = (r \cos{\theta}, r \sin{\theta}, h) $$
+
+![$ \chi ^2 $ test for uniform hemisphere](images/uniform_hemisphere.png)
+
+Cosine Hemisphere
+-----------------------------------------------------------
+It's clear that $$ \cos{\theta} = z $$
+
+\begin{equation*}
+p(x, y, z) = \begin{cases}
+               \frac{z}{\pi}, & x^2 + y^2 + z^2 \le 1, \text{and} z \ge 0\\
+               0, & \text{otherwise} \\
+               \end{cases}
+\end{equation*}
+
+As p is determined by z, we can ignore x and y first. So $$ p_1(z) = 2z \Rightarrow P_1(z) = z^2 \Rightarrow P_1^{-1}(t) = \sqrt{t} $$
+
+Wrap function is $$ \theta = 2 \pi x,\ h = \sqrt{y},\ r = \sqrt{1 - h^2}, \text{ and } wrap((x, y)) = (r \cos{\theta}, r \sin{\theta}, h) $$
+
+![$ \chi ^2 $ test for cosine hemisphere](images/cosine_hemisphere.png)
+
+
+
+<!--- 
+  Markdeep & image comparison library - probably no need to change anything below
+-->
+<style class="fallback">body{visibility:hidden;white-space:pre;font-family:monospace}</style><script src="resources/markdeep.min.js"></script><script>window.alreadyProcessedMarkdeep||(document.body.style.visibility="visible")</script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+<script src="resources/jquery.event.move.js"></script>
+<script src="resources/jquery.twentytwenty.js"></script>
+<link href="resources/offcanvas.css" rel="stylesheet">
+<link href="resources/twentytwenty.css" rel="stylesheet" type="text/css" />
+<script>
+$(window).load(function(){$(".twentytwenty-container").twentytwenty({default_offset_pct: 0.5});});
+</script>
