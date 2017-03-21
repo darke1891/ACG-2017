@@ -157,10 +157,13 @@ bool Accel::OctreeNode::rayIntersect(Mesh *mesh, Ray3f &ray, Intersection &its, 
         float u, v;
         for (uint32_t idx = 0; idx < 8; idx++) {
             to_search[idx] = std::make_pair(ray.maxt, 8);
-            if (children[idx].m_bbox.rayIntersect(ray, u, v))
-                if (ray.mint <= v && u <= ray.maxt)
-                    //rayIntersect(ray, u, v) return true in the end, so we need to check this
-                    to_search[idx] = std::make_pair(u, idx);
+            if (children[idx].m_bbox.contains(ray.o))
+                to_search[idx] = std::make_pair(0, idx);
+            else
+                if (children[idx].m_bbox.rayIntersect(ray, u, v))
+                    if (ray.mint <= v && u <= ray.maxt)
+                        //rayIntersect(ray, u, v) return true in the end, so we need to check this
+                        to_search[idx] = std::make_pair(u, idx);
         }
 
         #if ACCEL_OCTREENODE_IMPROVED_TRAVERSAL == 1

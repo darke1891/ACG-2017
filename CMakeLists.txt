@@ -87,6 +87,8 @@ add_executable(nori
   src/mirror.cpp
   src/dielectric.cpp
   src/normals.cpp
+  src/simple.cpp
+  src/ao.cpp
 )
 
 add_definitions(${NANOGUI_EXTRA_DEFS})
@@ -94,15 +96,17 @@ add_definitions(${NANOGUI_EXTRA_DEFS})
 # The following lines build the warping test application
 add_executable(warptest
   include/nori/warp.h
+  include/nori/bitmap.h
   src/warp.cpp
   src/warptest.cpp
   src/microfacet.cpp
   src/object.cpp
   src/proplist.cpp
   src/common.cpp
+  src/bitmap.cpp
 )
 
 target_link_libraries(nori tbb_static pugixml IlmImf nanogui ${NANOGUI_EXTRA_LIBS})
-target_link_libraries(warptest tbb_static nanogui ${NANOGUI_EXTRA_LIBS})
+target_link_libraries(warptest tbb_static IlmImf nanogui ${NANOGUI_EXTRA_LIBS})
 
 # vim: set et ts=2 sw=2 ft=cmake nospell:

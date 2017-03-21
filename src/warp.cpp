@@ -102,4 +102,135 @@ float Warp::squareToBeckmannPdf(const Vector3f &m, float alpha) {
     throw NoriException("Warp::squareToBeckmannPdf() is not yet implemented!");
 }
 
+void Warp::HierarchicalSampler::setImage(Bitmap &bitmap) {
+    layers.clear();
+    layers.push_back(hieImage());
+    layers[0].resize(bitmap.rows(), bitmap.cols());
+    float sum_color = 0;
+    for (int y = 0; y < bitmap.rows(); y++)
+        for (int x = 0; x < bitmap.cols(); x++){
+            float color = 0;
+            Color3f c = bitmap.coeff(y, x);
+            color += c.x();
+            color += c.y();
+            color += c.z();
+            layers[0].coeffRef(y,x) = color;
+            sum_color += layers[0].coeff(y,x);
+        }
+    sum_color /= bitmap.rows() * bitmap.cols();
+    for (int y = 0; y < bitmap.rows(); y++)
+        for (int x = 0; x < bitmap.cols(); x++)
+            layers[0].coeffRef(y, x) /= sum_color;
+    int index = 0;
+    while (true) {
+        int new_index = index + 1;
+        int rows = layers[index].rows();
+        int cols = layers[index].cols();
+        if (rows <= 2)
+            break;
+        layers.push_back(hieImage());
+        int new_rows = rows / 2;
+        int new_cols = cols / 2;
+        layers[new_index].resize(new_rows, new_cols);
+        for (int y=0; y<new_rows; y++)
+            for (int x=0; x<new_cols; x++) {
+                double new_color = 0;
+                new_color += layers[index].coeff(y * 2, x * 2);
+                new_color += layers[index].coeff(y * 2 + 1, x * 2);
+                new_color += layers[index].coeff(y * 2, x * 2 + 1);
+                new_color += layers[index].coeff(y * 2 + 1, x * 2 + 1);
+                new_color /= 4;
+                layers[new_index].coeffRef(y, x) = new_color;
+            }
+        index++;
+    }
+}
+
+float Warp::HierarchicalSampler::squareToHierarchicalPdf(const Point2f &p) {
+    if (for_pdf.rows() == 0 || for_pdf.cols() == 0)
+        return 1;
+    int row, col;
+    row = (1 - p.y()) * for_pdf.rows();
+    col = p.x() * for_pdf.cols();
+    if (row >= for_pdf.rows())
+        row = for_pdf.rows() - 1;
+    if (col >= for_pdf.cols())
+        col = for_pdf.cols() - 1;
+    return for_pdf.coeff(row, col);
+}
+
+void Warp::HierarchicalSampler::setTestLayer(int xres, int yres) {
+    if (layers.size() == 0)
+        return;
+    
+    int index = 0;
+    while (layers[index].rows() > yres)
+        index++;
+    for_pdf = layers[index];
+}
+
+Point2f Warp::HierarchicalSampler::squareToHierarchical(Point2f sample, int x, int y, int layer) {
+    double sx = sample.x();
+    double sy = sample.y();
+    sx = (sx < 0) ? 0 : sx;
+    sx = (sx > 1.0f) ? 1.0f : sx;
+    sy = (sy < 0) ? 0 : sy;
+    sy = (sy > 1.0f) ? 1.0f : sy;
+    if (layer < 0)
+        return Point2f(sx, sy);
+    double c00, c01, c10, c11;
+    c00 = layers[layer].coeff(y, x);
+    c01 = layers[layer].coeff(y, x + 1);
+    c10 = layers[layer].coeff(y + 1, x);
+    c11 = layers[layer].coeff(y + 1, x + 1);
+    double t0, t1;
+    t0 = (c00 + c10) / (c00 + c01 + c10 + c11);
+    double start_x, start_y;
+    if (sx < t0) {
+        sx /= t0;
+        t1 = c00 / (c00 + c10);
+        x = x * 2;
+        start_x = 0;
+    }
+    else {
+        sx = (sx - t0) / (1 - t0);
+        t1 = c01 / (c01 + c11);
+        x = x * 2 + 2;
+        start_x = 0.5f;
+    }
+    if (sy < t1) {
+        sy /= t1;
+        y = y * 2;
+        start_y = 0;
+    }
+    else {
+        sy = (sy - t1) / (1 - t1);
+        y = y * 2 + 2;
+        start_y = 0.5f;
+    }
+    Point2f next_p = squareToHierarchical(Point2f(sx, sy), x, y, layer-1);
+    Point2f res = (Point2f(next_p.x() * 0.5f + start_x, next_p.y() * 0.5f + start_y));
+    return res;
+
+}
+
+Point2f Warp::HierarchicalSampler::squareToHierarchical(Point2f sample) {
+    Point2f res = squareToHierarchical(sample, 0, 0, layers.size() - 1);
+    return (Point2f(res.x(), 1.0f - res.y()));
+}
+
+Point2f Warp::squareToHierarchical(const Point2f &sample, HierarchicalSampler &h_sampler) {
+    Point2f s = Point2f(sample.x(), sample.y());
+    return h_sampler.squareToHierarchical(s);
+}
+
+float Warp::squareToHierarchicalPdf(const Point2f &p, HierarchicalSampler &h_sampler) {
+    Point2f p2 = Point2f(p.x(), p.y());
+    return h_sampler.squareToHierarchicalPdf(p2);
+}
+
+Warp::HierarchicalSampler::HierarchicalSampler () {
+    layers.clear();
+}
+
 NORI_NAMESPACE_END

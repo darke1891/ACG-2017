@@ -18,6 +18,7 @@
 
 #include <nori/warp.h>
 #include <nori/bsdf.h>
+#include <nori/bitmap.h>
 #include <nanogui/screen.h>
 #include <nanogui/glutil.h>
 #include <nanogui/label.h>
@@ -29,6 +30,7 @@
 #include <nanogui/textbox.h>
 #include <nanogui/checkbox.h>
 #include <nanogui/messagedialog.h>
+#include <filesystem/resolver.h>
 #include <pcg32.h>
 #include <hypothesis.h>
 
@@ -56,6 +58,7 @@ using nori::PropertyList;
 using nori::BSDF;
 using nori::BSDFQueryRecord;
 using nori::Color3f;
+using nori::Bitmap;
 
 class WarpTest : public Screen {
 public:
@@ -73,7 +76,8 @@ public:
         UniformHemisphere,
         CosineHemisphere,
         Beckmann,
-        MicrofacetBRDF
+        MicrofacetBRDF,
+        Hierarchical
     };
 
     WarpTest(): Screen(Vector2i(800, 600), "Assignment 3: Sampling and Warping"), m_bRec(Vector3f()) {
@@ -99,6 +103,7 @@ public:
             case UniformHemisphere: result << Warp::squareToUniformHemisphere(sample); break;
             case CosineHemisphere: result << Warp::squareToCosineHemisphere(sample); break;
             case Beckmann: result << Warp::squareToBeckmann(sample, parameterValue); break;
+            case Hierarchical: result << Warp::squareToHierarchical(sample, h_sampler); break;
             case MicrofacetBRDF: {
                 BSDFQueryRecord bRec(m_bRec);
                 float value = m_brdf->sample(bRec, sample).getLuminance();
@@ -184,7 +189,7 @@ public:
         if (!m_brdfValueCheckBox->checked() || warpType != MicrofacetBRDF)
             value_scale = 0.f;
 
-        if (warpType != Square) {
+        if (warpType != Square &&  warpType != Hierarchical) {
             for (int i=0; i<m_pointCount; ++i) {
                 if (values(0, i) == 0.0f) {
                     positions.col(i) = Vector3f::Constant(std::numeric_limits<float>::quiet_NaN());
@@ -226,7 +231,7 @@ public:
                     positions.col(idx++) = value_scale == 0.f ? pt.first : (pt.first * pt.second * value_scale);
                 }
             }
-            if (warpType != Square) {
+            if (warpType != Square &&  warpType != Hierarchical) {
                 for (int i=0; i<m_lineCount; ++i)
                     positions.col(i) = positions.col(i) * 0.5f + Vector3f(0.5f, 0.5f, 0.0f);
             }
@@ -323,7 +328,7 @@ public:
             WarpType warpType = (WarpType) m_warpTypeBox->selectedIndex();
             const int spacer = 20;
             const int histWidth = (width() - 3*spacer) / 2;
-            const int histHeight = (warpType == Square || warpType == Disk || warpType == Tent) ? histWidth : histWidth / 2;
+            const int histHeight = (warpType == Square || warpType == Disk || warpType == Tent || warpType == Hierarchical) ? histWidth : histWidth / 2;
             const int verticalOffset = (height() - histHeight) / 2;
 
             drawHistogram(Point2i(spacer, verticalOffset), Vector2i(histWidth, histHeight), m_textures[0]);
@@ -405,8 +410,13 @@ public:
         WarpType warpType = (WarpType) m_warpTypeBox->selectedIndex();
         float parameterValue = mapParameter(warpType, m_parameterSlider->value());
 
-        if (warpType != Square && warpType != Disk && warpType != Tent)
+        if (warpType != Square && warpType != Disk && warpType != Tent && warpType != Hierarchical)
             xres *= 2;
+        else if (warpType == Hierarchical) {
+            xres = 32;
+            yres = 32;
+            h_sampler.setTestLayer(xres, yres);
+        }
 
         int res = yres*xres, sampleCount = 1000 * res;
         std::unique_ptr<double[]> obsFrequencies(new double[res]);
@@ -424,7 +434,7 @@ public:
             Vector3f sample = points.col(i);
             float x, y;
 
-            if (warpType == Square) {
+            if (warpType == Square || warpType == Hierarchical) {
                 x = sample.x();
                 y = sample.y();
             } else if (warpType == Disk || warpType == Tent) {
@@ -451,7 +461,10 @@ public:
             } else if (warpType == Tent) {
                 x = x * 2 - 1; y = y * 2 - 1;
                 return Warp::squareToTentPdf(Point2f(x, y));
-            } else {
+            } else if (warpType == Hierarchical) {
+                    return Warp::squareToHierarchicalPdf(Point2f(x, y), h_sampler);
+            }
+            else {
                 x *= 2 * M_PI;
                 y = y * 2 - 1;
 
@@ -483,7 +496,7 @@ public:
         };
 
         double scale = sampleCount;
-        if (warpType == Square)
+        if (warpType == Square || warpType == Hierarchical)
             scale *= 1;
         else if (warpType == Disk || warpType == Tent)
             scale *= 4;
@@ -565,7 +578,7 @@ public:
 
         new Label(m_window, "Warping method", "sans-bold");
         m_warpTypeBox = new ComboBox(m_window, { "Square", "Tent", "Disk", "Sphere", "Hemisphere (unif.)",
-                "Hemisphere (cos)", "Beckmann distr.", "Microfacet BRDF" });
+                "Hemisphere (cos)", "Beckmann distr.", "Microfacet BRDF", "Hierarchical" });
         m_warpTypeBox->setCallback([&](int) { refresh(); });
 
         panel = new Widget(m_window);
@@ -757,6 +770,7 @@ public:
         setVisible(true);
         framebufferSizeChanged();
     }
+    Warp::HierarchicalSampler h_sampler;
 private:
     GLShader *m_pointShader = nullptr;
     GLShader *m_gridShader = nullptr;
@@ -782,6 +796,15 @@ int main(int argc, char **argv) {
     nanogui::init();
 
     WarpTest *screen = new WarpTest();
+
+    if (argc == 2) {
+        filesystem::path path(argv[1]);
+        if (path.extension() == "exr") {
+            Bitmap bitmap(argv[1]);
+            screen->h_sampler.setImage(bitmap);
+        }
+    }
+
     nanogui::mainloop();
     delete screen;
 

@@ -97,6 +97,42 @@ Wrap function is $$ \theta = 2 \pi x,\ h = \sqrt{y},\ r = \sqrt{1 - h^2}, \text{
 
 ![$ \chi ^2 $ test for cosine hemisphere](images/cosine_hemisphere.png)
 
+Two simple rendering algorithms
+===================================
+
+Part 2.2: Point lights
+----------------------------------
+Actually I find a bug in my previous assignment, that when original point of a ray is inside a boundingbox, it should be thought as intersection. So I also submit 'accel.cpp'.
+
+<div class="twentytwenty-container">
+    <img src="images/ajax-simple-ref.png" alt="Reference">
+    <img src="images/ajax-simple.png" alt="Mine">
+</div>
+
+Part 2.1: Ambient occlusion
+---------------------------------
+$$ L_{full}(x) = \int_{H^2(x)} \frac{\cos{\theta}}{\pi} d\omega = 1 $$
+
+So, the average Li should be 1.
+
+<div class="twentytwenty-container">
+    <img src="images/ajax-ao-ref.png" alt="Reference">
+    <img src="images/ajax-ao.png" alt="Mine">
+</div>
+
+
+Hacker Points: Hierarchical Sample Warping
+=============================================
+
+* One important thing for this sampling is that the direction of y axis in image and that of 'warptest' are different, so we need to flip it.
+
+* I add a parameter for 'warptest'. For example, to use 'ttt.exr', I need to run 'warptest ttt.ext', then I can use hierarchical sample under 'Hierarchical'.
+
+* One of the problem is that resolution of the input image is $ 2^M \times 2^M $ , while the previous test resolution in 'warptest' is 51 * 51. Although we use pdf to calculte probability for every cells, it's not enough to sample on the image because 51 is much less than 512. So I change resolution of test for Hierarchical to 32 * 32, which allows us to have a better estimation for real value.
+
+![2 * 2 pixels input](images/two_times_two.png)
+
+![512 * 512 input](images/glacier.png)
 
 
 <!--- 
