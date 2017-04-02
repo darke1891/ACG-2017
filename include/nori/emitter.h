@@ -33,6 +33,7 @@ public:
      * provided by this instance
      * */
     EClassType getClassType() const { return EEmitter; }
+
 };
 
 NORI_NAMESPACE_END

@@ -3,7 +3,9 @@
 Feedback
 ========
 
-* I spent two hours to implement sample warping part and write report.
+* I spent seven hours on this assignment totally, including one hours for sample warping part, one hour for rendering, three hours for hacker points and two hours for report.
+
+* I think this assignment is not too difficult, but I do believe that the $ \chi^2 $ test for hack points is badly implemented. The problem is that bit image signal has too high frequency, which is higher than the test can handle. So we need to do something for pdf to match the test, and it needs knowledge in other fields.
 
 Part 1: Monte Carlo Sampling
 ===========================
@@ -128,7 +130,7 @@ Hacker Points: Hierarchical Sample Warping
 
 * I add a parameter for 'warptest'. For example, to use 'ttt.exr', I need to run 'warptest ttt.ext', then I can use hierarchical sample under 'Hierarchical'.
 
-* One of the problem is that resolution of the input image is $ 2^M \times 2^M $ , while the previous test resolution in 'warptest' is 51 * 51. Although we use pdf to calculte probability for every cells, it's not enough to sample on the image because 51 is much less than 512. So I change resolution of test for Hierarchical to 32 * 32, which allows us to have a better estimation for real value.
+* One of the problem is that resolution of the input image is $ 2^M \times 2^M $ , while the previous test resolution in 'warptest' is 51 * 51. Although we use pdf to calculte probability for every cells, it's not enough to sample on the image because 51 is much less than 512. So I change resolution of test for Hierarchical to 32 * 32, which allows us to merge input images and make frequency of image signal lower.
 
 ![2 * 2 pixels input](images/two_times_two.png)
 
