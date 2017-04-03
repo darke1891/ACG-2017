@@ -19,8 +19,16 @@
 #pragma once
 
 #include <nori/object.h>
+#include <nori/mesh.h>
 
 NORI_NAMESPACE_BEGIN
+
+struct EmitterSample {
+    Point3f point;
+    Vector3f normal;
+    Color3f radiance;
+    float probability_density;
+};
 
 /**
  * \brief Superclass of all emitters
@@ -34,6 +42,10 @@ public:
      * */
     EClassType getClassType() const { return EEmitter; }
 
+    virtual void emit_activate(Mesh *mesh) = 0;
+    virtual EmitterSample sample(Point2f &p) const = 0;
+    virtual Color3f hit(Point3f p) const = 0;
+    virtual float get_weight() const = 0;
 };
 
 NORI_NAMESPACE_END

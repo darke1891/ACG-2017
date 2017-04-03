@@ -18,6 +18,7 @@
 
 #include <nori/bsdf.h>
 #include <nori/frame.h>
+#include <Eigen/Geometry>
 
 NORI_NAMESPACE_BEGIN
 
@@ -43,7 +44,48 @@ public:
     }
 
     Color3f sample(BSDFQueryRecord &bRec, const Point2f &sample) const {
-        throw NoriException("Unimplemented!");
+        bRec.measure = EDiscrete;
+
+        float eta1, eta2;
+        Vector3f n;
+        if (Frame::cosTheta(bRec.wi) <= 0) {
+            eta1 = m_intIOR;
+            eta2 = m_extIOR;
+            n = Vector3f(0, 0, -1);
+        }
+        else {
+            eta1 = m_extIOR;
+            eta2 = m_intIOR;
+            n = Vector3f(0, 0, 1);
+        }
+        float costhe1, costhe2;
+        Vector3f ome_t;
+        float rate_c = pow(eta1 / eta2, 2.0f);
+        rate_c *= 1.0f - pow(bRec.wi.dot(n), 2.0f);
+        rate_c = 1.0f - rate_c;
+        bRec.wo = Vector3f(
+            -bRec.wi.x(),
+            -bRec.wi.y(),
+             bRec.wi.z()
+        );
+        bRec.eta = 1.0f;
+        if (rate_c > 0.0f) {
+            ome_t = - n * sqrt(rate_c);
+            ome_t -= (eta1 / eta2) * (bRec.wi - bRec.wi.dot(n) * n);
+            if (ome_t.dot(bRec.wi) > 0.0f)
+            cout << ome_t.dot(bRec.wi) << endl;
+            costhe1 = fabs(Frame::cosTheta(bRec.wi));
+            costhe2 = fabs(Frame::cosTheta(ome_t));
+            float rho1, rho2, Fr;
+            rho1 = (eta2 * costhe1 - eta1 * costhe2) / (eta2 * costhe1 + eta1 * costhe2);
+            rho2 = (eta1 * costhe1 - eta2 * costhe2) / (eta1 * costhe1 + eta2 * costhe2);
+            Fr = 0.5f * (rho1 * rho1 + rho2 * rho2);
+            if (sample.x() > Fr) {
+                bRec.wo = ome_t;
+                bRec.eta = eta1 / eta2;
+            }
+        }
+        return Color3f(1.0f);
     }
 
     std::string toString() const {

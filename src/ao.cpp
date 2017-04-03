@@ -19,12 +19,12 @@ public:
 
         Vector3f n, n1, n2;
         n = its.shFrame.n;
+        n1 = n;
         if (fabs(n.x()) > 0.2)
-            n1 = Vector3f(-n.x(), n.y(), n.z());
-        else if (fabs(n.y()) > 0.2)
-            n1 = Vector3f(n.x(), -n.y(), n.z());
+            n1.y() += 1;
         else
-            n1 = Vector3f(n.x(), n.y(), -n.z());
+            n1.x() += 1;
+        n1 = n1.normalized();
         n1 -= n * n.dot(n1);
         n1 = n1.normalized();
         n2.x() = n1.y() * n.z() - n1.z() * n.y();
