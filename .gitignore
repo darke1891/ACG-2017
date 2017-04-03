@@ -20,3 +20,5 @@ rules.ninja
 *.opendb
 Debug
 x64
+*.exr
+ajax.obj

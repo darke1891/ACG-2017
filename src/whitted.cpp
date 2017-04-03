@@ -60,7 +60,7 @@ public:
             emitter = meshs[idx]->getEmitter();
             if (emitter == nullptr)
                 continue;
-            dpdf.append(emitter->get_weight());
+            dpdf.append(1.0f / emitter->get_weight());
             mesh_idx.push_back(idx);
         }
         dpdf.normalize();
