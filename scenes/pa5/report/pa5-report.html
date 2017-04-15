@@ -1,0 +1,53 @@
+**Programming Assignment 5 - Hao Sun**
+
+Feedback
+========
+
+* 1 hour for part 1.1-1.2 and report.
+
+* 1.5 hours for part 1.3-1.4 and report.
+
+Part 1.1, 1.2: Beckmann distribution
+===========================================
+
+* Here I just follow the tutorial. One thing I need to do is to calculate inverse CDF.
+
+* The $ \frac{1}{2\pi} $ term is for $ \phi $ part, so we can just ignore it and leave $ \phi $ term to $ sample.x() $.
+
+* Now we need to calculate inverse function $ I(d_0) $ for $ D(\theta) = \frac{2 e^{\frac{-\tan{\theta}^2}{\alpha^2}}}{\alpha^2 \cos{\theta}^3} $, so $ \theta_0 = I(d_0) $ satisfies $ d_0 = \int_{0}^{\theta_0} \frac{2 e^{\frac{-\tan{\theta}^2}{\alpha^2}}}{\alpha^2 \cos{\theta}^3} \sin{\theta} \mathrm{d} \theta $. To make it simpler, let $ x = \cos{\theta} $ and $ I_1(d_0) = x_0 = \cos{I(d_0)} $, then we have
+
+\begin{equation*}
+\int_{0}^{\theta_0} \frac{2 e^{\frac{-\tan{\theta}^2}{\alpha^2}}}{\alpha^2 \cos{\theta}^3} \sin{\theta} \mathrm{d} \theta
+= - \int_{1}^{x_0} \frac{2 e^{-\frac{1 - x^2}{\alpha^2 x^2}}}{\alpha^2 x^3} \mathrm{d}x 
+= \int_{x_0}^{1} \left( -\frac{1 - x^2}{\alpha^2 x^2} \right)'
+e^{-\frac{1 - x^2}{\alpha^2 x^2}} \mathrm{d}x
+= 1 - e^{-\frac{1}{\alpha^2 x_0^2} + \frac{1}{\alpha^2}} \\
+
+I_1(d) = \sqrt{\frac{1}{1 - \alpha^2 \ln{(1 - d)}}} \\
+
+d = sample.y(),\ \cos{\theta} = I_1(d),\ \sin{\theta} = \sqrt{1 - \cos{\theta}^2}
+\end{equation*}
+
+Part 1.3, 1.4: Microfacet BRDF
+============================================
+* I just follow the equations to do this part.
+
+* A problem I met is that I forgot to scale the sample points to reuse it later. In 'warptest', 'kd' is always (0, 0, 0), so I spent almost a hour to find the bug.
+
+
+
+
+
+
+<!--- 
+  Markdeep & image comparison library - probably no need to change anything below
+-->
+<style class="fallback">body{visibility:hidden;white-space:pre;font-family:monospace}</style><script src="resources/markdeep.min.js"></script><script>window.alreadyProcessedMarkdeep||(document.body.style.visibility="visible")</script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+<script src="resources/jquery.event.move.js"></script>
+<script src="resources/jquery.twentytwenty.js"></script>
+<link href="resources/offcanvas.css" rel="stylesheet">
+<link href="resources/twentytwenty.css" rel="stylesheet" type="text/css" />
+<script>
+$(window).load(function(){$(".twentytwenty-container").twentytwenty({default_offset_pct: 0.5});});
+</script>

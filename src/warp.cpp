@@ -95,11 +95,32 @@ float Warp::squareToCosineHemispherePdf(const Vector3f &v) {
 }
 
 Vector3f Warp::squareToBeckmann(const Point2f &sample, float alpha) {
-    throw NoriException("Warp::squareToBeckmann() is not yet implemented!");
+    float cth, sth;
+    if (sample.y() == 1.0f)
+        cth = 0.0f;
+    else {
+        float t1 = log(1 - sample.y()) * alpha * alpha;
+        t1 = 1 - t1;
+        cth = sqrt(1.0f / t1);
+    }
+
+    float phi = 2.0f * M_PI * sample.x();
+    sth = sqrt(1 - cth * cth);
+    return Vector3f(sth * cos(phi), sth * sin(phi), cth);
 }
 
 float Warp::squareToBeckmannPdf(const Vector3f &m, float alpha) {
-    throw NoriException("Warp::squareToBeckmannPdf() is not yet implemented!");
+    if ((m.z() > 0) && (m.norm() <= 1)) {
+        float theta = acos(m.z());
+        float d = 0.5f / M_PI;
+        float t1 = tan(theta) / alpha;
+        float t2 = cos(theta);
+        d *= 2.0f * exp(-t1 * t1);
+        d /= alpha * alpha * t2 * t2 * t2;
+        return d;
+    }
+    else
+        return 0.0f;
 }
 
 void Warp::HierarchicalSampler::setImage(Bitmap &bitmap) {
