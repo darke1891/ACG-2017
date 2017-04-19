@@ -72,8 +72,6 @@ public:
         if (rate_c > 0.0f) {
             ome_t = - n * sqrt(rate_c);
             ome_t -= (eta1 / eta2) * (bRec.wi - bRec.wi.dot(n) * n);
-            if (ome_t.dot(bRec.wi) > 0.0f)
-            cout << ome_t.dot(bRec.wi) << endl;
             costhe1 = fabs(Frame::cosTheta(bRec.wi));
             costhe2 = fabs(Frame::cosTheta(ome_t));
             float rho1, rho2, Fr;

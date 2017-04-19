@@ -120,7 +120,8 @@ public:
         if (Frame::cosTheta(bRec.wi) <= 0)
             return Color3f(0.0f);
 
-        bRec.eta = m_intIOR / m_extIOR;
+        // bRec.eta = m_intIOR / m_extIOR;
+        bRec.eta = 1.0f;
         bRec.measure = ESolidAngle;
 
         if (_sample.x() > m_ks) {
