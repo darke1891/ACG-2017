@@ -17,7 +17,7 @@ public:
     virtual void emit_activate(Mesh *);
     virtual EmitterSample sample(Point2f &p) const;
     virtual Color3f hit(Point3f p) const;
-    virtual float get_weight() const;
+    virtual float get_pdf() const;
 
 private:
     Color3f radiance;
@@ -30,7 +30,7 @@ Color3f AreaLight::hit(Point3f p) const {
     return radiance;
 }
 
-float AreaLight::get_weight() const {
+float AreaLight::get_pdf() const {
     return probability_density;
 }
 

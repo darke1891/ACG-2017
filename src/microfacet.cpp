@@ -59,26 +59,29 @@ public:
     }
 
     float G1(const Vector3f &w, const Vector3f &wh) const {
-        if (w.dot(wh) / Frame::cosTheta(w) <= 0.0f)
+        if (w.dot(wh) * Frame::cosTheta(w) <= 0.0f)
             return 0.0f;
 
         float b, ct, st;
         ct = Frame::cosTheta(w);
         st = Frame::sinTheta(w);
-        b = ct / m_alpha / st;
+        if (st < Epsilon)
+            b = 100.0f;
+        else
+            b = ct / m_alpha / st;
         float b2 = b * b;
         if (b < 1.6f)
             return (3.535f * b + 2.181f * b2) / (1.0f + 2.276f * b + 2.577f * b2);
         else
-            return 1;
+            return 1.0f;
     }
 
     /// Evaluate the BRDF for the given pair of directions
     Color3f eval(const BSDFQueryRecord &bRec) const {
 
         if (bRec.measure != ESolidAngle
-            || Frame::cosTheta(bRec.wi) <= 0
-            || Frame::cosTheta(bRec.wo) <= 0)
+            || Frame::cosTheta(bRec.wi) <= 0.0f
+            || Frame::cosTheta(bRec.wo) <= 0.0f)
             return Color3f(0.0f);
 
         Color3f res, res_kd;
@@ -101,8 +104,8 @@ public:
     /// Evaluate the sampling density of \ref sample() wrt. solid angles
     float pdf(const BSDFQueryRecord &bRec) const {
         if (bRec.measure != ESolidAngle
-            || Frame::cosTheta(bRec.wi) <= 0
-            || Frame::cosTheta(bRec.wo) <= 0)
+            || Frame::cosTheta(bRec.wi) <= 0.0f
+            || Frame::cosTheta(bRec.wo) <= 0.0f)
             return 0.0f;
 
         float res = m_ks;
@@ -117,7 +120,7 @@ public:
 
     /// Sample the BRDF
     Color3f sample(BSDFQueryRecord &bRec, const Point2f &_sample) const {
-        if (Frame::cosTheta(bRec.wi) <= 0)
+        if (Frame::cosTheta(bRec.wi) <= 0.0f)
             return Color3f(0.0f);
 
         // bRec.eta = m_intIOR / m_extIOR;
@@ -139,14 +142,18 @@ public:
             bRec.wo = 2 * wh * bRec.wi.dot(wh) - bRec.wi;
         }
 
-        if (Frame::cosTheta(bRec.wo) <= 0)
+        if (Frame::cosTheta(bRec.wo) <= 0.0f)
             return Color3f(0.0f);
 
         // Note: Once you have implemented the part that computes the scattered
         // direction, the last part of this function should simply return the
         // BRDF value divided by the solid angle density and multiplied by the
         // cosine factor from the reflection equation, i.e.
-        return eval(bRec) * Frame::cosTheta(bRec.wo) / pdf(bRec);
+        double pdf_rec = pdf(bRec);
+        if (pdf_rec <= 0.0f)
+            return Color3f(0.0f);
+        else
+            return eval(bRec) * Frame::cosTheta(bRec.wo) / pdf_rec;
     }
 
     bool isDiffuse() const {

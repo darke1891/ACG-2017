@@ -45,7 +45,7 @@ public:
     virtual void emit_activate(Mesh *mesh) = 0;
     virtual EmitterSample sample(Point2f &p) const = 0;
     virtual Color3f hit(Point3f p) const = 0;
-    virtual float get_weight() const = 0;
+    virtual float get_pdf() const = 0;
 };
 
 NORI_NAMESPACE_END
