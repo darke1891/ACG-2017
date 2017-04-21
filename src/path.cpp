@@ -10,17 +10,18 @@
 
 NORI_NAMESPACE_BEGIN
 
-class PathSimpleIntegrator : public Integrator {
+class PathIntegrator : public Integrator {
 public:
-    PathSimpleIntegrator(const PropertyList &props) {
+    PathIntegrator(const PropertyList &props) {
     }
 
-    Color3f Li(const Scene *scene, Sampler *sampler, const Ray3f &ray, bool is_diffuse) const {
+    Color3f Li(const Scene *scene, Sampler *sampler, const Ray3f &ray, bool is_diffuse, float pb) const {
         Intersection its;
         if (!scene->rayIntersect(ray, its))
             return Color3f(0.0f);
 
         Color3f res(0.0f);
+        float pl;
 
         const BSDF *bsdf;
         const Emitter *emitter;
@@ -29,14 +30,18 @@ public:
         BSDFQueryRecord bRec(Vector3f(0.0f, 0.0f, 0.0f));
 
         if (emitter != nullptr) {
-            if (!is_diffuse) {
-             Color3f direct_res = emitter->hit(its.p);
-                Vector3f d_direct = -ray.d;
-                d_direct = its.shFrame.toLocal(d_direct);
-                if (d_direct.z() <= 0.0f)
-                    direct_res *= 0.0f;
-                res += direct_res;
+            Color3f direct_res = emitter->hit(its.p);
+            Vector3f d_direct = -ray.d;
+            d_direct = its.shFrame.toLocal(d_direct);
+            if (d_direct.z() <= 0.0f)
+                direct_res *= 0.0f;
+            else if (is_diffuse) {
+                pl = emitter->get_pdf();
+                pl /= d_direct.z();
+                if (pb + pl > 0.0f)
+                    direct_res *= pb / (pb + pl);
             }
+            res += direct_res;
             bRec = BSDFQueryRecord(its.shFrame.toLocal(-ray.d));
         }
         else {
@@ -66,6 +71,14 @@ public:
                 Color3f d_color = bsdf->eval(bRec);
                 d_color *= g_weight;
                 d_color *= emitter_sample.radiance;
+
+                pl = - emitter_sample.normal.dot(d_norm);
+                if (pl > 0.0f) {
+                    pl = emitter->get_pdf() / pl;
+                    pb = bsdf->pdf(bRec);
+                    d_color *= pl / (pb + pl);
+                }
+
                 res += d_color;
             }
         }
@@ -76,8 +89,9 @@ public:
             Point2f re_sample = sampler->next2D();
             Color3f re_color = bsdf->sample(bRec, re_sample);
             if ((re_color.r() != 0.0f) || (re_color.g() != 0.0f) || (re_color.b() != 0.0f)) {
+                pb = bsdf->pdf(bRec);
                 Ray3f new_ray(its.p, its.shFrame.toWorld(bRec.wo));
-                Color3f re_Lix = Li(scene, sampler, new_ray, bsdf->isDiffuse());
+                Color3f re_Lix = Li(scene, sampler, new_ray, bsdf->isDiffuse(), pb);
                 res += re_Lix * re_color / xi_threshold * bRec.eta * bRec.eta;
             }
         }
@@ -86,14 +100,14 @@ public:
     }
 
     Color3f Li(const Scene *scene, Sampler *sampler, const Ray3f &ray) const {
-        return Li(scene, sampler, ray, false);
+        return Li(scene, sampler, ray, false, 0.0f);
     }
 
     std::string toString() const {
-        return "PathSimpleIntegrator[]";
+        return "PathIntegrator[]";
     }
 
 };
 
-NORI_REGISTER_CLASS(PathSimpleIntegrator, "path_simple");
+NORI_REGISTER_CLASS(PathIntegrator, "path");
 NORI_NAMESPACE_END

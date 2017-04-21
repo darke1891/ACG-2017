@@ -48,7 +48,7 @@ public:
 
         float eta1, eta2;
         Vector3f n;
-        if (Frame::cosTheta(bRec.wi) <= Epsilon) {
+        if (Frame::cosTheta(bRec.wi) <= 0.0f) {
             eta1 = m_intIOR;
             eta2 = m_extIOR;
             n = Vector3f(0, 0, -1);
