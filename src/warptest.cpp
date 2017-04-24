@@ -77,6 +77,7 @@ public:
         CosineHemisphere,
         Beckmann,
         MicrofacetBRDF,
+        RoughDielectric,
         Hierarchical
     };
 
@@ -86,7 +87,7 @@ public:
     }
 
     static float mapParameter(WarpType warpType, float parameterValue) {
-        if (warpType == Beckmann || warpType == MicrofacetBRDF)
+        if (warpType == Beckmann || warpType == MicrofacetBRDF || warpType == RoughDielectric)
             parameterValue = std::exp(std::log(0.05f) * (1 - parameterValue) +
                                       std::log(1.f)   *  parameterValue);
         return parameterValue;
@@ -109,6 +110,11 @@ public:
                 float value = m_brdf->sample(bRec, sample).getLuminance();
                 return std::make_pair(bRec.wo, value == 0 ? 0.f : m_brdf->eval(bRec)[0]);
              }
+            case RoughDielectric: {
+                BSDFQueryRecord bRec(m_bRec);
+                float value = m_brdf->sample(bRec, sample).getLuminance();
+                return std::make_pair(bRec.wo, value == 0 ? 0.f : m_brdf->eval(bRec)[0]);
+            }
         }
 
         return std::make_pair(result, 1.f);
@@ -169,6 +175,16 @@ public:
                 Vector3f(std::sin(bsdfAngle), 0,
                          std::max(std::cos(bsdfAngle), 1e-4f)).normalized();
         }
+        if (warpType == RoughDielectric) {
+            PropertyList list;
+            list.setFloat("alpha", parameterValue);
+            m_brdf = std::unique_ptr<BSDF>((BSDF *) NoriObjectFactory::createInstance("roughdielectric", list));
+
+            float bsdfAngle = M_PI * (m_angleSlider->value() - 0.5f);
+            m_bRec.wi =
+                Vector3f(std::sin(bsdfAngle), 0,
+                         std::max(std::cos(bsdfAngle), 1e-4f)).normalized();
+        }
 
         /* Generate the point positions */
         MatrixXf positions, values;
@@ -186,7 +202,7 @@ public:
             value_scale = std::max(value_scale, values(0, i));
         value_scale = 1.f/value_scale;
 
-        if (!m_brdfValueCheckBox->checked() || warpType != MicrofacetBRDF)
+        if (!m_brdfValueCheckBox->checked() || (warpType != MicrofacetBRDF && warpType != RoughDielectric))
             value_scale = 0.f;
 
         if (warpType != Square &&  warpType != Hierarchical) {
@@ -269,12 +285,12 @@ public:
         m_pointCountBox->setValue(str);
         m_parameterBox->setValue(tfm::format("%.1g", parameterValue));
         m_angleBox->setValue(tfm::format("%.1f", m_angleSlider->value() * 180-90));
-        m_parameterSlider->setEnabled(warpType == Beckmann || warpType == MicrofacetBRDF);
-        m_parameterBox->setEnabled(warpType == Beckmann || warpType == MicrofacetBRDF);
-        m_angleBox->setEnabled(warpType == MicrofacetBRDF);
-        m_angleSlider->setEnabled(warpType == MicrofacetBRDF);
-        m_parameterBox->setEnabled(warpType == MicrofacetBRDF);
-        m_brdfValueCheckBox->setEnabled(warpType == MicrofacetBRDF);
+        m_parameterSlider->setEnabled(warpType == Beckmann || warpType == MicrofacetBRDF || warpType == RoughDielectric);
+        m_parameterBox->setEnabled(warpType == Beckmann || warpType == MicrofacetBRDF || warpType == RoughDielectric);
+        m_angleBox->setEnabled(warpType == MicrofacetBRDF || warpType == RoughDielectric);
+        m_angleSlider->setEnabled(warpType == MicrofacetBRDF || warpType == RoughDielectric);
+        m_parameterBox->setEnabled(warpType == MicrofacetBRDF || warpType == RoughDielectric);
+        m_brdfValueCheckBox->setEnabled(warpType == MicrofacetBRDF || warpType == RoughDielectric);
         m_pointCountSlider->setValue((std::log((float) m_pointCount) / std::log(2.f) - 5) / 15);
     }
 
@@ -388,6 +404,11 @@ public:
                 m_arrowShader->setUniform("mvp", mvp);
                 m_arrowShader->drawArray(GL_LINES, 0, 106);
             }
+            if (m_warpTypeBox->selectedIndex() == RoughDielectric) {
+                m_arrowShader->bind();
+                m_arrowShader->setUniform("mvp", mvp);
+                m_arrowShader->drawArray(GL_LINES, 0, 106);
+            }
         }
     }
 
@@ -489,6 +510,11 @@ public:
                     bRec.wo = v;
                     bRec.measure = nori::ESolidAngle;
                     return m_brdf->pdf(bRec);
+                } else if (warpType == RoughDielectric) {
+                    BSDFQueryRecord bRec(m_bRec);
+                    bRec.wo = v;
+                    bRec.measure = nori::ESolidAngle;
+                    return m_brdf->pdf(bRec);
                 } else {
                     throw NoriException("Invalid warp type");
                 }
@@ -578,7 +604,7 @@ public:
 
         new Label(m_window, "Warping method", "sans-bold");
         m_warpTypeBox = new ComboBox(m_window, { "Square", "Tent", "Disk", "Sphere", "Hemisphere (unif.)",
-                "Hemisphere (cos)", "Beckmann distr.", "Microfacet BRDF", "Hierarchical" });
+                "Hemisphere (cos)", "Beckmann distr.", "Microfacet BRDF", "Rough Dielectric", "Hierarchical" });
         m_warpTypeBox->setCallback([&](int) { refresh(); });
 
         panel = new Widget(m_window);

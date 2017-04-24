@@ -22,9 +22,9 @@
 
 NORI_NAMESPACE_BEGIN
 
-class Microfacet : public BSDF {
+class RoughDielectric : public BSDF {
 public:
-    Microfacet(const PropertyList &propList) {
+    RoughDielectric(const PropertyList &propList) {
         /* RMS surface roughness */
         m_alpha = propList.getFloat("alpha", 0.1f);
 
@@ -34,18 +34,6 @@ public:
         /* Exterior IOR (default: air) */
         m_extIOR = propList.getFloat("extIOR", 1.000277f);
 
-        /* Albedo of the diffuse base material (a.k.a "kd") */
-        m_kd = propList.getColor("kd", Color3f(0.5f));
-
-        /* To ensure energy conservation, we must scale the 
-           specular component by 1-kd. 
-
-           While that is not a particularly realistic model of what 
-           happens in reality, this will greatly simplify the 
-           implementation. Please see the course staff if you're 
-           interested in implementing a more realistic version 
-           of this BRDF. */
-        m_ks = 1 - m_kd.maxCoeff();
     }
 
     float DW(const Vector3f &w) const{
@@ -84,19 +72,16 @@ public:
             || Frame::cosTheta(bRec.wo) <= 0.0f)
             return Color3f(0.0f);
 
-        Color3f res, res_kd;
-        res_kd = m_kd * INV_PI;
+        Color3f res;
 
         Vector3f wh = bRec.wi + bRec.wo;
         wh.normalize();
 
-        res = Color3f(1.0f) * m_ks * DW(wh);
+        res = Color3f(1.0f) * DW(wh);
         res *= fresnel(wh.dot(bRec.wi), m_extIOR, m_intIOR);
         res *= G1(bRec.wi, wh) * G1(bRec.wo, wh);
         res /= 4.0f * Frame::cosTheta(bRec.wi) * Frame::cosTheta(bRec.wo) * Frame::cosTheta(wh);
         // todo: Frame::cosTheta(wh)
-        res += res_kd;
-
 
         return res;
     }
@@ -108,13 +93,12 @@ public:
             || Frame::cosTheta(bRec.wo) <= 0.0f)
             return 0.0f;
 
-        float res = m_ks;
+        float res = 1.0f;
         Vector3f wh = bRec.wi + bRec.wo;
         wh.normalize();
         res *= DW(wh);
         res *= Frame::cosTheta(wh);
         res /= 4.0f * wh.dot(bRec.wo);
-        res += (1.0f - m_ks) * Frame::cosTheta(bRec.wo) * INV_PI;
         return res;
     }
 
@@ -127,20 +111,12 @@ public:
         bRec.eta = 1.0f;
         bRec.measure = ESolidAngle;
 
-        if (_sample.x() > m_ks) {
-            Point2f new_sample = Point2f((_sample.x() - m_ks) / (1.0f - m_ks), _sample.y());
-            bRec.wo = Warp::squareToCosineHemisphere(new_sample);
-        }
-        else {
-            Point2f new_sample = Point2f(_sample.x() / m_ks, _sample.y());
-            Vector3f wh = Warp::squareToBeckmann(new_sample, m_alpha);
-            // Frame frame_h(wh);
-            // Vector3f hwi = frame_h.toLocal(bRec.wi);
-            // Vector3f hwo = Vector3f(-hwi.x(), -hwi.y(), hwi.z());
-
-
-            bRec.wo = 2 * wh * bRec.wi.dot(wh) - bRec.wi;
-        }
+        Point2f new_sample = Point2f(_sample.x(), _sample.y());
+        Vector3f wh = Warp::squareToBeckmann(new_sample, m_alpha);
+        // Frame frame_h(wh);
+        // Vector3f hwi = frame_h.toLocal(bRec.wi);
+        // Vector3f hwo = Vector3f(-hwi.x(), -hwi.y(), hwi.z());
+        bRec.wo = 2 * wh * bRec.wi.dot(wh) - bRec.wi;
 
         if (Frame::cosTheta(bRec.wo) <= 0.0f)
             return Color3f(0.0f);
@@ -157,34 +133,25 @@ public:
     }
 
     bool isDiffuse() const {
-        /* While microfacet BRDFs are not perfectly diffuse, they can be
-           handled by sampling techniques for diffuse/non-specular materials,
-           hence we return true here */
         return true;
     }
 
     std::string toString() const {
         return tfm::format(
-            "Microfacet[\n"
+            "RoughDielectric[\n"
             "  alpha = %f,\n"
             "  intIOR = %f,\n"
             "  extIOR = %f,\n"
-            "  kd = %s,\n"
-            "  ks = %f\n"
             "]",
             m_alpha,
             m_intIOR,
-            m_extIOR,
-            m_kd.toString(),
-            m_ks
+            m_extIOR
         );
     }
 private:
     float m_alpha;
     float m_intIOR, m_extIOR;
-    float m_ks;
-    Color3f m_kd;
 };
 
-NORI_REGISTER_CLASS(Microfacet, "microfacet");
+NORI_REGISTER_CLASS(RoughDielectric, "roughdielectric");
 NORI_NAMESPACE_END

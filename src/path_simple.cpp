@@ -28,6 +28,21 @@ public:
         emitter = its.mesh->getEmitter();
         BSDFQueryRecord bRec(Vector3f(0.0f, 0.0f, 0.0f));
 
+        const std::vector<Mesh *> meshs = scene->getMeshes();
+        std::vector<int> mesh_idx;
+        const Emitter *emitter2;
+        mesh_idx.clear();
+        DiscretePDF dpdf;
+        dpdf.clear();
+        for (uint32_t idx = 0; idx < meshs.size(); idx++) {
+            emitter2 = meshs[idx]->getEmitter();
+            if (emitter2 == nullptr)
+                continue;
+            dpdf.append(1.0f);
+            mesh_idx.push_back(idx);
+        }
+        dpdf.normalize();
+
         if (emitter != nullptr) {
             if (!is_diffuse) {
              Color3f direct_res = emitter->hit(its.p);
@@ -40,34 +55,33 @@ public:
             bRec = BSDFQueryRecord(its.shFrame.toLocal(-ray.d));
         }
         else {
-            const std::vector<Mesh *> meshs = scene->getMeshes();
+            float emitter_u = sampler->next1D();
+            float emitter_pdf;
+            size_t emitter_id = dpdf.sample(emitter_u, emitter_pdf);
+            emitter = meshs[mesh_idx[emitter_id]]->getEmitter();
 
-            for (uint32_t idx = 0; idx < meshs.size(); idx++) {
-                emitter = meshs[idx]->getEmitter();
-                if (emitter == nullptr)
-                    continue;
-                Point2f sample = sampler->next2D();
-                EmitterSample emitter_sample = emitter->sample(sample);
-                Vector3f d = emitter_sample.point - its.p;
-                Vector3f d_norm;
-                float dis = d.norm();
-                d_norm = d;
-                d_norm.normalize();
-                Ray3f newRay(its.p, d_norm, Epsilon, dis - Epsilon);
-                float g_weight = 1.0f / emitter_sample.probability_density;
-                if (scene->rayIntersect(newRay))
-                    g_weight = 0;
-                if (emitter_sample.normal.dot(d_norm) >= 0.0f)
-                    g_weight = 0;
-                else
-                    g_weight *= fabs(its.shFrame.n.dot(d_norm)) * fabs(emitter_sample.normal.dot(d_norm)) / (dis * dis);
-                bRec = BSDFQueryRecord(its.shFrame.toLocal(-ray.d), its.shFrame.toLocal(d_norm), ESolidAngle);
-                
-                Color3f d_color = bsdf->eval(bRec);
-                d_color *= g_weight;
-                d_color *= emitter_sample.radiance;
-                res += d_color;
-            }
+            Point2f sample = sampler->next2D();
+            EmitterSample emitter_sample = emitter->sample(sample);
+            Vector3f d = emitter_sample.point - its.p;
+            Vector3f d_norm;
+            float dis = d.norm();
+            d_norm = d;
+            d_norm.normalize();
+            Ray3f newRay(its.p, d_norm, Epsilon, dis - Epsilon);
+            float g_weight = 1.0f / emitter_sample.probability_density;
+            if (scene->rayIntersect(newRay))
+                g_weight = 0;
+            if (emitter_sample.normal.dot(d_norm) >= 0.0f)
+                g_weight = 0;
+            else
+                g_weight *= fabs(its.shFrame.n.dot(d_norm)) * fabs(emitter_sample.normal.dot(d_norm)) / (dis * dis);
+            bRec = BSDFQueryRecord(its.shFrame.toLocal(-ray.d), its.shFrame.toLocal(d_norm), ESolidAngle);
+            
+            Color3f d_color = bsdf->eval(bRec);
+            d_color *= g_weight;
+            d_color *= emitter_sample.radiance;
+            d_color /= emitter_pdf;
+            res += d_color;
         }
 
         float re_xi = sampler->next1D();

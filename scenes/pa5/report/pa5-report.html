@@ -39,13 +39,19 @@ Part 1.3, 1.4: Microfacet BRDF
 
 Part2: Simple Path tracer
 =============================================
-* I find that, with my previous strategy, number of sample points is not enough for Veach scene, so I change the strategy of sample on light source. Now, I get one sample from each light source.
+* I find that, with my previous strategy for sampling on light source, number of sample points is not enough for Veach scene, so I change the strategy.
+
+* When I need to sample on light source, I need to select one light source first. In my previous implementation, I will select one light source with a probability corresponding to its area, which means larger light source get more samples. However, in Veach scene, we have five light sources, and they are somehow similar but have different size. Then we can't have too many samples on smaller light source with my previous strategy.
+
+* The new strategy is to select light source with the same probability. So all light source objects are selected with the same probability, then get a sample point on the selected light source.
+
+* If the light sources have similar area and complex shape, I think my previous strategy is better. However, in our test cases, light sources are pretty simple, and areas of light sources are much different from each other, so I change strategy for light source selecting.
 
 * Then, I just use code from 'whitted.cpp'. I also add some check to avoid Nan value.
 
 Part3: Path tracer with Multiple Importance Sampling
 =====================================================
-* I choose to convert probability to measure with respect to solid angles. Then $ p_{Light} = \frac{p_{Light in area}}{\cos \theta} $ because the area on surface can be larger than area through light direction.
+* I choose to convert probability to measure with respect to solid angles. Then $ p_{Light} = p_{Light\ in\ area} \frac{r^2}{\cos \theta} $ because the area on surface can be larger than area through light direction.
 
 * Another thing need to be modified is that as we use multiple important sampling now, double counting is different sample method now, so we don't remove $ L_e $ term if it's from BRDF sample and hits a light source. Instead, we can weight samples.
 

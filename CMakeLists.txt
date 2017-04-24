@@ -93,6 +93,7 @@ add_executable(nori
   src/whitted.cpp
   src/path_simple.cpp
   src/path.cpp
+  src/roughdielectric.cpp
 )
 
 add_definitions(${NANOGUI_EXTRA_DEFS})
@@ -108,6 +109,7 @@ add_executable(warptest
   src/proplist.cpp
   src/common.cpp
   src/bitmap.cpp
+  src/roughdielectric.cpp
 )
 
 target_link_libraries(nori tbb_static pugixml IlmImf nanogui ${NANOGUI_EXTRA_LIBS})
