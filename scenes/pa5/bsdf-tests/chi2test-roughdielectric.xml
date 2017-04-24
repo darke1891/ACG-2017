@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<test type="chi2test">
+	<!-- Test a few different configurations of the microfacet model -->
+	<bsdf type="roughdielectric">
+		<float name="alpha" value="0.1"/>
+		<float name="intIOR" value="1.33"/>
+		<float name="extIOR" value="1.01"/>
+	</bsdf>
+
+	<bsdf type="roughdielectric">
+		<float name="alpha" value="0.3"/>
+		<float name="intIOR" value="1.5"/>
+		<float name="extIOR" value="1.01"/>
+	</bsdf>
+
+	<bsdf type="roughdielectric">
+		<float name="alpha" value="0.6"/>
+		<float name="intIOR" value="1.8"/>
+		<float name="extIOR" value="1.3"/>
+	</bsdf>
+</test>
