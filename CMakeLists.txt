@@ -110,6 +110,7 @@ add_executable(warptest
   src/common.cpp
   src/bitmap.cpp
   src/roughdielectric.cpp
+  src/independent.cpp
 )
 
 target_link_libraries(nori tbb_static pugixml IlmImf nanogui ${NANOGUI_EXTRA_LIBS})

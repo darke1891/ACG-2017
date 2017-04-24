@@ -19,6 +19,8 @@
 #include <nori/bsdf.h>
 #include <nori/frame.h>
 #include <nori/warp.h>
+#include <nori/object.h>
+#include <nori/sampler.h>
 
 NORI_NAMESPACE_BEGIN
 
@@ -34,9 +36,13 @@ public:
         /* Exterior IOR (default: air) */
         m_extIOR = propList.getFloat("extIOR", 1.000277f);
 
+        sampler = static_cast<Sampler *>(NoriObjectFactory::createInstance("independent", propList));
+
     }
 
     float DW(const Vector3f &w) const{
+        if (Frame::cosTheta(w) <= 0.0f)
+            return 0.0f;
         float ct, ct2, st2, al2;
         ct = Frame::cosTheta(w);
         ct2 = ct * ct;
@@ -68,19 +74,23 @@ public:
     Color3f eval(const BSDFQueryRecord &bRec) const {
 
         if (bRec.measure != ESolidAngle
-            || Frame::cosTheta(bRec.wi) <= 0.0f
-            || Frame::cosTheta(bRec.wo) <= 0.0f)
+            || Frame::cosTheta(bRec.wi) <= 0.0f)
             return Color3f(0.0f);
 
         Color3f res;
 
-        Vector3f wh = bRec.wi + bRec.wo;
+        Vector3f wo = bRec.wo;
+        if (wo.z() < 0.f)
+            wo.z() = -wo.z();
+
+        Vector3f wh = bRec.wi + wo;
         wh.normalize();
 
         res = Color3f(1.0f) * DW(wh);
         res *= fresnel(wh.dot(bRec.wi), m_extIOR, m_intIOR);
-        res *= G1(bRec.wi, wh) * G1(bRec.wo, wh);
-        res /= 4.0f * Frame::cosTheta(bRec.wi) * Frame::cosTheta(bRec.wo) * Frame::cosTheta(wh);
+        res *= G1(bRec.wi, wh) * G1(wo, wh);
+        res /= 4.0f * Frame::cosTheta(bRec.wi) * Frame::cosTheta(wo) * Frame::cosTheta(wh);
+        res /= 2.0f;
         // todo: Frame::cosTheta(wh)
 
         return res;
@@ -89,16 +99,20 @@ public:
     /// Evaluate the sampling density of \ref sample() wrt. solid angles
     float pdf(const BSDFQueryRecord &bRec) const {
         if (bRec.measure != ESolidAngle
-            || Frame::cosTheta(bRec.wi) <= 0.0f
-            || Frame::cosTheta(bRec.wo) <= 0.0f)
+            || Frame::cosTheta(bRec.wi) <= 0.0f)
             return 0.0f;
 
+        Vector3f wo = bRec.wo;
+        if (wo.z() < 0.f)
+            wo.z() = -wo.z();
+
         float res = 1.0f;
-        Vector3f wh = bRec.wi + bRec.wo;
+        Vector3f wh = bRec.wi + wo;
         wh.normalize();
         res *= DW(wh);
         res *= Frame::cosTheta(wh);
-        res /= 4.0f * wh.dot(bRec.wo);
+        res /= 4.0f * wh.dot(wo);
+        res /= 2.0f;
         return res;
     }
 
@@ -112,6 +126,7 @@ public:
         bRec.measure = ESolidAngle;
 
         Point2f new_sample = Point2f(_sample.x(), _sample.y());
+
         Vector3f wh = Warp::squareToBeckmann(new_sample, m_alpha);
         // Frame frame_h(wh);
         // Vector3f hwi = frame_h.toLocal(bRec.wi);
@@ -121,6 +136,10 @@ public:
         if (Frame::cosTheta(bRec.wo) <= 0.0f)
             return Color3f(0.0f);
 
+        float sample2 = sampler->next1D();
+        if (sample2 < 0.5f)
+            bRec.wo.z() = - bRec.wo.z();
+
         // Note: Once you have implemented the part that computes the scattered
         // direction, the last part of this function should simply return the
         // BRDF value divided by the solid angle density and multiplied by the
@@ -129,7 +148,7 @@ public:
         if (pdf_rec <= 0.0f)
             return Color3f(0.0f);
         else
-            return eval(bRec) * Frame::cosTheta(bRec.wo) / pdf_rec;
+            return eval(bRec) * fabs(Frame::cosTheta(bRec.wo)) / pdf_rec;
     }
 
     bool isDiffuse() const {
@@ -151,6 +170,7 @@ public:
 private:
     float m_alpha;
     float m_intIOR, m_extIOR;
+    Sampler *sampler;
 };
 
 NORI_REGISTER_CLASS(RoughDielectric, "roughdielectric");
