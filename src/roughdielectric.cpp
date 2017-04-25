@@ -31,10 +31,10 @@ public:
         m_alpha = propList.getFloat("alpha", 0.1f);
 
         /* Interior IOR (default: BK7 borosilicate optical glass) */
-        m_intIOR = propList.getFloat("intIOR", 1.8f); // 5046f);
+        m_intIOR = propList.getFloat("intIOR", 1.5046f);
 
         /* Exterior IOR (default: air) */
-        m_extIOR = propList.getFloat("extIOR", 1.3f); // 000277f);
+        m_extIOR = propList.getFloat("extIOR", 1.000277f);
 
     }
 
@@ -75,25 +75,65 @@ public:
             || Frame::cosTheta(bRec.wi) == 0.0f
             || Frame::cosTheta(bRec.wo) == 0.0f)
             return Color3f(0.0f);
-        return Color3f(1.0f);
 
-        Color3f res;
+        Vector3f wi, wo, n, wh;
+        float eta1, eta2;
+        wi = bRec.wi;
+        wo = bRec.wo;
+        if (Frame::cosTheta(wi) > 0.0f) {
+            eta1 = m_extIOR;
+            eta2 = m_intIOR;
+            n = Vector3f(0, 0, 1.0f);
+        }
+        else {
+            eta1 = m_intIOR;
+            eta2 = m_extIOR;
+            n = Vector3f(0, 0, -1.0f);
+        }
+        float res;
+        if (Frame::cosTheta(wi) * Frame::cosTheta(wo) > 0.0f) {
+            wh = wi + wo;
+            wh.normalize();
+            if (Frame::cosTheta(wi) < 0.0f)
+                wh *= -1.0f;
+            if (G1(wi, wh) <= 0.0f)
+                return Color3f(0.0f);
+            if (G1(wo, wh) <= 0.0f)
+                return Color3f(0.0f);
+            if (Frame::cosTheta(wh) <= 0.0f)
+                return Color3f(0.0f);
 
-        Vector3f wo = bRec.wo;
-        if (wo.z() < 0.f)
-            wo.z() = -wo.z();
+            float F = fresnel(fabs(wh.dot(wi)), eta1, eta2);
+            res = F;
+            res *= DW(wh);
+            res *= G1(wi, wh) * G1(wo, wh);
+            res /= 4.0f * fabs(Frame::cosTheta(bRec.wi) * Frame::cosTheta(wo) * Frame::cosTheta(wh));
 
-        Vector3f wh = bRec.wi + wo;
-        wh.normalize();
+        }
+        else {
+            wh = -(eta1 * wi + eta2 * wo);
+            wh.normalize();
 
-        res = Color3f(1.0f) * DW(wh);
-        res *= fresnel(wh.dot(bRec.wi), m_extIOR, m_intIOR);
-        res *= G1(bRec.wi, wh) * G1(wo, wh);
-        res /= 4.0f * Frame::cosTheta(bRec.wi) * Frame::cosTheta(wo) * Frame::cosTheta(wh);
-        res /= 2.0f;
-        // todo: Frame::cosTheta(wh)
+            if (G1(wi, wh) <= 0.0f)
+                return Color3f(0.0f);
+            if (G1(wo, wh) <= 0.0f)
+                return Color3f(0.0f);
+            if (Frame::cosTheta(wh) <= 0.0f)
+                return Color3f(0.0f);
 
-        return res;
+            float F = fresnel(fabs(wh.dot(wi)), eta1, eta2);
+            float eta = eta1 / eta2;
+            float weight0 = eta * wi.dot(wh) + wo.dot(wh);
+
+            res = 1.0f - F;
+            res /= weight0 * weight0;
+            res *= DW(wh);
+            res *= G1(wi, wh) * G1(wo, wh);
+            res /= fabs(Frame::cosTheta(wi) * Frame::cosTheta(wo) * Frame::cosTheta(wh));
+            res *= fabs(wo.dot(wh) * wi.dot(wh));
+        }
+
+        return Color3f(res);
     }
 
     /// Evaluate the sampling density of \ref sample() wrt. solid angles
@@ -127,6 +167,8 @@ public:
                 return 0.0f;
             if (G1(wo, wh) <= 0.0f)
                 return 0.0f;
+            if (Frame::cosTheta(wh) <= 0.0f)
+                return 0.0f;
 
             float F = fresnel(fabs(wh.dot(wi)), eta1, eta2);
             res = F;
@@ -143,6 +185,8 @@ public:
             if (G1(wi, wh) <= 0.0f)
                 return 0.0f;
             if (G1(wo, wh) <= 0.0f)
+                return 0.0f;
+            if (Frame::cosTheta(wh) <= 0.0f)
                 return 0.0f;
 
             float F = fresnel(fabs(wh.dot(wi)), eta1, eta2);
@@ -216,12 +260,6 @@ public:
         if (pdf_rec <= 0.0f)
             return Color3f(0.0f);
 
-        return Color3f(1.0f);
-
-        // Note: Once you have implemented the part that computes the scattered
-        // direction, the last part of this function should simply return the
-        // BRDF value divided by the solid angle density and multiplied by the
-        // cosine factor from the reflection equation, i.e.
         return eval(bRec) * fabs(Frame::cosTheta(bRec.wo)) / pdf_rec;
     }
 

@@ -1,0 +1,56 @@
+
+<scene>
+    <integrator type="path"/>
+
+    <sampler type="independent">
+        <!-- You might want to reduce this number during development -->
+        <integer name="sampleCount" value="64"/>
+    </sampler>
+
+    <camera type="perspective">
+        <!-- Camera-to-world coordinate system transformation -->
+        <transform name="toWorld">
+            <lookat target="-6.48161, 2.72211, 2.38576"
+                    origin="-6.56055, 2.75762, 2.43583"
+                    up="0.299858, 0.934836, -0.190177"/>
+        </transform>
+
+        <float name="fov" value="25"/>
+
+        <integer name="width" value="600"/>
+        <integer name="height" value="600"/>
+    </camera>
+
+    <mesh type="obj">
+        <string name="filename" value="ajax.obj"/>
+        <transform name="toWorld">
+            <scale value="0.1, 0.1, 0.1"/>
+            <translate value="0, -2, 0"/>
+        </transform>
+        <bsdf type="roughdielectric">
+            <float name="intIOR" value="1.7"/>
+            <float name="alpha" value="0.08"/>
+        </bsdf>
+    </mesh>
+
+    <mesh type="obj">
+        <string name="filename" value="floor.obj"/>
+        <bsdf type="diffuse">
+            <color name="albedo" value="0.5, 0.5, 0.5"/>
+        </bsdf>
+    </mesh>
+
+    <mesh type="obj">
+        <string name="filename" value="light1.obj"/>
+        <emitter type="area">
+            <color name="radiance" value="20, 20, 200"/>
+        </emitter>
+    </mesh>
+
+    <mesh type="obj">
+        <string name="filename" value="light2.obj"/>
+        <emitter type="area">
+            <color name="radiance" value="200, 20, 20"/>
+        </emitter>
+    </mesh>
+</scene>

@@ -113,6 +113,7 @@ public:
                 ++total;
 
                 float cosTheta = random.nextFloat();
+                // uncomment this line when testing microfacet BSDF
                 // cosTheta = cosTheta * 2.0f - 1.0f;
                 float sinTheta = std::sqrt(std::max((float) 0, 1-cosTheta*cosTheta));
                 float sinPhi, cosPhi;
