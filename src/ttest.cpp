@@ -103,6 +103,8 @@ public:
     void activate() {
         int total = 0, passed = 0;
         pcg32 random;
+        PropertyList propList;
+        Sampler* sampler = static_cast<Sampler *>(NoriObjectFactory::createInstance("independent", propList));
 
         if (!m_bsdfs.empty()) {
             if (m_references.size() * m_bsdfs.size() != m_angles.size())
@@ -120,7 +122,7 @@ public:
                     cout << "Testing (angle=" << angle << "): " << bsdf->toString() << endl;
                     ++total;
 
-                    BSDFQueryRecord bRec(sphericalDirection(degToRad(angle), 0));
+                    BSDFQueryRecord bRec(sphericalDirection(degToRad(angle), 0), sampler);
 
                     cout << "Drawing " << m_sampleCount << " samples .. " << endl;
                     double mean=0, variance = 0;

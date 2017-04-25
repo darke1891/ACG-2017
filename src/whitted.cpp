@@ -84,7 +84,7 @@ public:
             g_weight = 0;
         else
             g_weight *= fabs(its.shFrame.n.dot(d_norm)) * fabs(emitter_sample.normal.dot(d_norm)) / (dis * dis);
-        BSDFQueryRecord bRec(its.shFrame.toLocal(-ray.d), its.shFrame.toLocal(d_norm), ESolidAngle);
+        BSDFQueryRecord bRec(its.shFrame.toLocal(-ray.d), its.shFrame.toLocal(d_norm), ESolidAngle, sampler);
         
         Color3f d_color = bsdf->eval(bRec);
         d_color *= g_weight;

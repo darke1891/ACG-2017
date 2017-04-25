@@ -19,6 +19,7 @@
 #pragma once
 
 #include <nori/object.h>
+#include <nori/sampler.h>
 
 NORI_NAMESPACE_BEGIN
 
@@ -39,14 +40,23 @@ struct BSDFQueryRecord {
     /// Measure associated with the sample
     EMeasure measure;
 
-    /// Create a new record for sampling the BSDF
+    Sampler* sampler;
+
+    /// Create a new record for sampling the BSDF without sampler
     BSDFQueryRecord(const Vector3f &wi)
         : wi(wi), measure(EUnknownMeasure) { }
 
-    /// Create a new record for querying the BSDF
+    /// Create a new record for querying the BSDF without sampler
     BSDFQueryRecord(const Vector3f &wi,
             const Vector3f &wo, EMeasure measure)
         : wi(wi), wo(wo), measure(measure) { }
+
+    // Create a new record with sampler
+    BSDFQueryRecord(const Vector3f &wi, Sampler* s)
+        : wi(wi), measure(EUnknownMeasure), sampler(s) { }
+    BSDFQueryRecord(const Vector3f &wi,
+            const Vector3f &wo, EMeasure measure, Sampler* s)
+        : wi(wi), wo(wo), measure(measure), sampler(s) { }
 };
 
 /**

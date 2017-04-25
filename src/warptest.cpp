@@ -19,6 +19,7 @@
 #include <nori/warp.h>
 #include <nori/bsdf.h>
 #include <nori/bitmap.h>
+#include <nori/sampler.h>
 #include <nanogui/screen.h>
 #include <nanogui/glutil.h>
 #include <nanogui/label.h>
@@ -59,6 +60,7 @@ using nori::BSDF;
 using nori::BSDFQueryRecord;
 using nori::Color3f;
 using nori::Bitmap;
+using nori::Sampler;
 
 class WarpTest : public Screen {
 public:
@@ -84,6 +86,10 @@ public:
     WarpTest(): Screen(Vector2i(800, 600), "Assignment 3: Sampling and Warping"), m_bRec(Vector3f()) {
         initializeGUI();
         m_drawHistogram = false;
+        PropertyList propList;
+        sampler = static_cast<Sampler *>(NoriObjectFactory::createInstance("independent", propList));
+        m_bRec.sampler = sampler;
+
     }
 
     static float mapParameter(WarpType warpType, float parameterValue) {
@@ -816,6 +822,7 @@ private:
     std::unique_ptr<BSDF> m_brdf;
     BSDFQueryRecord m_bRec;
     std::pair<bool, std::string> m_testResult;
+    Sampler* sampler;
 };
 
 int main(int argc, char **argv) {

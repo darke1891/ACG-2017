@@ -26,7 +26,7 @@ public:
         const Emitter *emitter;
         bsdf = its.mesh->getBSDF();
         emitter = its.mesh->getEmitter();
-        BSDFQueryRecord bRec(Vector3f(0.0f, 0.0f, 0.0f));
+        BSDFQueryRecord bRec(Vector3f(0.0f, 0.0f, 0.0f), sampler);
 
         const std::vector<Mesh *> meshs = scene->getMeshes();
         std::vector<int> mesh_idx;
@@ -52,7 +52,7 @@ public:
                     direct_res *= 0.0f;
                 res += direct_res;
             }
-            bRec = BSDFQueryRecord(its.shFrame.toLocal(-ray.d));
+            bRec = BSDFQueryRecord(its.shFrame.toLocal(-ray.d), sampler);
         }
         else {
             float emitter_u = sampler->next1D();
@@ -75,7 +75,7 @@ public:
                 g_weight = 0;
             else
                 g_weight *= fabs(its.shFrame.n.dot(d_norm)) * fabs(emitter_sample.normal.dot(d_norm)) / (dis * dis);
-            bRec = BSDFQueryRecord(its.shFrame.toLocal(-ray.d), its.shFrame.toLocal(d_norm), ESolidAngle);
+            bRec = BSDFQueryRecord(its.shFrame.toLocal(-ray.d), its.shFrame.toLocal(d_norm), ESolidAngle, sampler);
             
             Color3f d_color = bsdf->eval(bRec);
             d_color *= g_weight;

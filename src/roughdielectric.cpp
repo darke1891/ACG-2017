@@ -36,8 +36,6 @@ public:
         /* Exterior IOR (default: air) */
         m_extIOR = propList.getFloat("extIOR", 1.000277f);
 
-        sampler = static_cast<Sampler *>(NoriObjectFactory::createInstance("independent", propList));
-
     }
 
     float DW(const Vector3f &w) const{
@@ -121,24 +119,58 @@ public:
         if (Frame::cosTheta(bRec.wi) <= 0.0f)
             return Color3f(0.0f);
 
-        // bRec.eta = m_intIOR / m_extIOR;
-        bRec.eta = 1.0f;
         bRec.measure = ESolidAngle;
 
         Point2f new_sample = Point2f(_sample.x(), _sample.y());
 
         Vector3f wh = Warp::squareToBeckmann(new_sample, m_alpha);
-        // Frame frame_h(wh);
-        // Vector3f hwi = frame_h.toLocal(bRec.wi);
-        // Vector3f hwo = Vector3f(-hwi.x(), -hwi.y(), hwi.z());
-        bRec.wo = 2 * wh * bRec.wi.dot(wh) - bRec.wi;
+        if (Warp::squareToBeckmannPdf(wh, m_alpha) <= 0.0f)
+            return Color3f(0.0f);
+        if (G1(bRec.wi, wh) <= 0.0f)
+            return Color3f(0.0f);
+        float sample2 = bRec.sampler->next1D();
 
-        if (Frame::cosTheta(bRec.wo) <= 0.0f)
+        bRec.wo = 2 * wh * bRec.wi.dot(wh) - bRec.wi;
+        if (bRec.wo.z() <= 0.0f)
             return Color3f(0.0f);
 
-        float sample2 = sampler->next1D();
         if (sample2 < 0.5f)
-            bRec.wo.z() = - bRec.wo.z();
+            bRec.wo.z() = -bRec.wo.z();
+        return Color3f(1.0f);
+
+
+        float eta1, eta2;
+        Vector3f n;
+        if (Frame::cosTheta(bRec.wi) <= 0.0f) {
+            eta1 = m_intIOR;
+            eta2 = m_extIOR;
+        }
+        else {
+            eta1 = m_extIOR;
+            eta2 = m_intIOR;
+        }
+
+        float F = fresnel(fabs(wh.dot(bRec.wi)), eta1, eta2);
+
+        if (sample2 > F) {
+            float c = bRec.wi.dot(wh);
+            float eta = eta1 / eta2;
+            float weight0 = sqrt(1 + eta * (c * c - 1));
+            if (Frame::cosTheta(bRec.wi) <= 0.0f)
+                weight0 = -weight0;
+            weight0 = eta * c - weight0;
+            bRec.wo = weight0 * wh - eta * bRec.wi;
+            bRec.eta = eta1 / eta2;
+        }
+        else {
+            bRec.wo = 2 * wh * bRec.wi.dot(wh) - bRec.wi;
+            bRec.eta = 1.0f;
+        }
+
+        if (G1(bRec.wo, wh) <= 0.0f)
+            return Color3f(0.0f);
+
+        return Color3f(1.0f);
 
         // Note: Once you have implemented the part that computes the scattered
         // direction, the last part of this function should simply return the
@@ -170,7 +202,6 @@ public:
 private:
     float m_alpha;
     float m_intIOR, m_extIOR;
-    Sampler *sampler;
 };
 
 NORI_REGISTER_CLASS(RoughDielectric, "roughdielectric");
