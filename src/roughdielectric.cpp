@@ -31,10 +31,10 @@ public:
         m_alpha = propList.getFloat("alpha", 0.1f);
 
         /* Interior IOR (default: BK7 borosilicate optical glass) */
-        m_intIOR = propList.getFloat("intIOR", 1.5046f);
+        m_intIOR = propList.getFloat("intIOR", 1.8f); // 5046f);
 
         /* Exterior IOR (default: air) */
-        m_extIOR = propList.getFloat("extIOR", 1.000277f);
+        m_extIOR = propList.getFloat("extIOR", 1.3f); // 000277f);
 
     }
 
@@ -55,7 +55,7 @@ public:
             return 0.0f;
 
         float b, ct, st;
-        ct = Frame::cosTheta(w);
+        ct = fabs(Frame::cosTheta(w));
         st = Frame::sinTheta(w);
         if (st <= 0.0f)
             b = 100.0f;
@@ -72,8 +72,10 @@ public:
     Color3f eval(const BSDFQueryRecord &bRec) const {
 
         if (bRec.measure != ESolidAngle
-            || Frame::cosTheta(bRec.wi) <= 0.0f)
+            || Frame::cosTheta(bRec.wi) == 0.0f
+            || Frame::cosTheta(bRec.wo) == 0.0f)
             return Color3f(0.0f);
+        return Color3f(1.0f);
 
         Color3f res;
 
@@ -97,26 +99,69 @@ public:
     /// Evaluate the sampling density of \ref sample() wrt. solid angles
     float pdf(const BSDFQueryRecord &bRec) const {
         if (bRec.measure != ESolidAngle
-            || Frame::cosTheta(bRec.wi) <= 0.0f)
+            || Frame::cosTheta(bRec.wi) == 0.0f
+            || Frame::cosTheta(bRec.wo) == 0.0f)
             return 0.0f;
 
-        Vector3f wo = bRec.wo;
-        if (wo.z() < 0.f)
-            wo.z() = -wo.z();
+        Vector3f wi, wo, n, wh;
+        float eta1, eta2;
+        wi = bRec.wi;
+        wo = bRec.wo;
+        if (Frame::cosTheta(wi) > 0.0f) {
+            eta1 = m_extIOR;
+            eta2 = m_intIOR;
+            n = Vector3f(0, 0, 1.0f);
+        }
+        else {
+            eta1 = m_intIOR;
+            eta2 = m_extIOR;
+            n = Vector3f(0, 0, -1.0f);
+        }
+        float res;
+        if (Frame::cosTheta(wi) * Frame::cosTheta(wo) > 0.0f) {
+            wh = wi + wo;
+            wh.normalize();
+            if (Frame::cosTheta(wi) < 0.0f)
+                wh *= -1.0f;
+            if (G1(wi, wh) <= 0.0f)
+                return 0.0f;
+            if (G1(wo, wh) <= 0.0f)
+                return 0.0f;
 
-        float res = 1.0f;
-        Vector3f wh = bRec.wi + wo;
-        wh.normalize();
-        res *= DW(wh);
-        res *= Frame::cosTheta(wh);
-        res /= 4.0f * wh.dot(wo);
-        res /= 2.0f;
+            float F = fresnel(fabs(wh.dot(wi)), eta1, eta2);
+            res = F;
+            res /= 4.0f * fabs(wh.dot(wo));
+
+            res *= DW(wh);
+            res *= fabs(Frame::cosTheta(wh));
+
+        }
+        else {
+            wh = -(eta1 * wi + eta2 * wo);
+            wh.normalize();
+
+            if (G1(wi, wh) <= 0.0f)
+                return 0.0f;
+            if (G1(wo, wh) <= 0.0f)
+                return 0.0f;
+
+            float F = fresnel(fabs(wh.dot(wi)), eta1, eta2);
+            res = 1.0f - F;
+            float eta = eta1 / eta2;
+            float weight0 = eta * wi.dot(wh) + wo.dot(wh);
+            res /= weight0 * weight0;
+            res *= fabs(wo.dot(wh));
+
+            res *= DW(wh);
+            res *= fabs(Frame::cosTheta(wh));
+        }
+
         return res;
     }
 
     /// Sample the BRDF
     Color3f sample(BSDFQueryRecord &bRec, const Point2f &_sample) const {
-        if (Frame::cosTheta(bRec.wi) <= 0.0f)
+        if (Frame::cosTheta(bRec.wi) == 0.0f)
             return Color3f(0.0f);
 
         bRec.measure = ESolidAngle;
@@ -130,18 +175,8 @@ public:
             return Color3f(0.0f);
         float sample2 = bRec.sampler->next1D();
 
-        bRec.wo = 2 * wh * bRec.wi.dot(wh) - bRec.wi;
-        if (bRec.wo.z() <= 0.0f)
-            return Color3f(0.0f);
-
-        if (sample2 < 0.5f)
-            bRec.wo.z() = -bRec.wo.z();
-        return Color3f(1.0f);
-
-
         float eta1, eta2;
-        Vector3f n;
-        if (Frame::cosTheta(bRec.wi) <= 0.0f) {
+        if (Frame::cosTheta(bRec.wi) < 0.0f) {
             eta1 = m_intIOR;
             eta2 = m_extIOR;
         }
@@ -151,23 +186,34 @@ public:
         }
 
         float F = fresnel(fabs(wh.dot(bRec.wi)), eta1, eta2);
-
         if (sample2 > F) {
-            float c = bRec.wi.dot(wh);
             float eta = eta1 / eta2;
-            float weight0 = sqrt(1 + eta * (c * c - 1));
-            if (Frame::cosTheta(bRec.wi) <= 0.0f)
-                weight0 = -weight0;
-            weight0 = eta * c - weight0;
-            bRec.wo = weight0 * wh - eta * bRec.wi;
-            bRec.eta = eta1 / eta2;
+            float weight0 = bRec.wi.dot(wh);
+            weight0 = eta * eta * (1 - weight0 * weight0);
+            weight0 = sqrt(1.0f - weight0);
+            if (Frame::cosTheta(bRec.wi) < 0.0f)
+                weight0 *= -1.0f;
+            Vector3f wt = - weight0 * wh;
+            wt -= eta * (bRec.wi - bRec.wi.dot(wh) * wh);
+            wt.normalize();
+
+            bRec.wo = wt;
+            bRec.eta = eta;
+            if (Frame::cosTheta(bRec.wo) * Frame::cosTheta(bRec.wi) >= 0.0f)
+                return Color3f(0.0f);
         }
         else {
             bRec.wo = 2 * wh * bRec.wi.dot(wh) - bRec.wi;
             bRec.eta = 1.0f;
+            if (Frame::cosTheta(bRec.wo) * Frame::cosTheta(bRec.wi) <= 0.0f)
+                return Color3f(0.0f);
         }
 
         if (G1(bRec.wo, wh) <= 0.0f)
+            return Color3f(0.0f);
+
+        double pdf_rec = pdf(bRec);
+        if (pdf_rec <= 0.0f)
             return Color3f(0.0f);
 
         return Color3f(1.0f);
@@ -176,11 +222,7 @@ public:
         // direction, the last part of this function should simply return the
         // BRDF value divided by the solid angle density and multiplied by the
         // cosine factor from the reflection equation, i.e.
-        double pdf_rec = pdf(bRec);
-        if (pdf_rec <= 0.0f)
-            return Color3f(0.0f);
-        else
-            return eval(bRec) * fabs(Frame::cosTheta(bRec.wo)) / pdf_rec;
+        return eval(bRec) * fabs(Frame::cosTheta(bRec.wo)) / pdf_rec;
     }
 
     bool isDiffuse() const {

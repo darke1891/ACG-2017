@@ -134,11 +134,6 @@ public:
         else {
             Point2f new_sample = Point2f(_sample.x() / m_ks, _sample.y());
             Vector3f wh = Warp::squareToBeckmann(new_sample, m_alpha);
-            // Frame frame_h(wh);
-            // Vector3f hwi = frame_h.toLocal(bRec.wi);
-            // Vector3f hwo = Vector3f(-hwi.x(), -hwi.y(), hwi.z());
-
-
             bRec.wo = 2 * wh * bRec.wi.dot(wh) - bRec.wi;
         }
 

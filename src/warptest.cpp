@@ -189,7 +189,7 @@ public:
             float bsdfAngle = M_PI * (m_angleSlider->value() - 0.5f);
             m_bRec.wi =
                 Vector3f(std::sin(bsdfAngle), 0,
-                         std::max(std::cos(bsdfAngle), 1e-4f)).normalized();
+                         - std::max(std::cos(bsdfAngle), 1e-4f)).normalized();
         }
 
         /* Generate the point positions */

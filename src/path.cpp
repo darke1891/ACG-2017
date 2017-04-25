@@ -109,7 +109,7 @@ public:
                 pb = bsdf->pdf(bRec);
                 Ray3f new_ray(its.p, its.shFrame.toWorld(bRec.wo));
                 Color3f re_Lix = Li(scene, sampler, new_ray, bsdf->isDiffuse(), pb);
-                res += re_Lix * re_color / xi_threshold * bRec.eta * bRec.eta;
+                res += re_Lix * re_color / xi_threshold;
             }
         }
 

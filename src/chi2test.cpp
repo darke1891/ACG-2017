@@ -70,6 +70,9 @@ public:
 
         if (m_sampleCount < 0) // ~5K samples per bin
             m_sampleCount = m_cosThetaResolution * m_phiResolution * 5000;
+
+        sampler = static_cast<Sampler *>(NoriObjectFactory::createInstance("independent", propList));
+
     }
 
     virtual ~ChiSquareTest() {
@@ -93,8 +96,6 @@ public:
     void activate() {
         int passed = 0, total = 0, res = m_cosThetaResolution*m_phiResolution;
         pcg32 random; /* Pseudorandom number generator */
-        PropertyList propList;
-        Sampler* sampler = static_cast<Sampler *>(NoriObjectFactory::createInstance("independent", propList));
 
         std::unique_ptr<double[]> obsFrequencies(new double[res]);
         std::unique_ptr<double[]> expFrequencies(new double[res]);
@@ -112,6 +113,7 @@ public:
                 ++total;
 
                 float cosTheta = random.nextFloat();
+                // cosTheta = cosTheta * 2.0f - 1.0f;
                 float sinTheta = std::sqrt(std::max((float) 0, 1-cosTheta*cosTheta));
                 float sinPhi, cosPhi;
                 sincosf(2.0f * M_PI * random.nextFloat(), &sinPhi, &cosPhi);
@@ -120,6 +122,7 @@ public:
                 cout << "Accumulating " << m_sampleCount << " samples into a " << m_cosThetaResolution
                      << "x" << m_phiResolution << " contingency table .. ";
                 cout.flush();
+
 
                 /* Generate many samples from the BSDF and create
                    a histogram / contingency table */
@@ -223,6 +226,7 @@ private:
     int m_testCount;
     float m_significanceLevel;
     std::vector<BSDF *> m_bsdfs;
+    Sampler* sampler;
 };
 
 NORI_REGISTER_CLASS(ChiSquareTest, "chi2test");

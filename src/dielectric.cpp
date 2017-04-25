@@ -46,44 +46,40 @@ public:
     Color3f sample(BSDFQueryRecord &bRec, const Point2f &sample) const {
         bRec.measure = EDiscrete;
 
+        if (Frame::cosTheta(bRec.wi) == 0.0f)
+            return Color3f(0.0f);
+
         float eta1, eta2;
         Vector3f n;
         if (Frame::cosTheta(bRec.wi) <= 0.0f) {
             eta1 = m_intIOR;
             eta2 = m_extIOR;
-            n = Vector3f(0, 0, -1);
+            n = Vector3f(0, 0, -1.0f);
         }
         else {
             eta1 = m_extIOR;
             eta2 = m_intIOR;
-            n = Vector3f(0, 0, 1);
+            n = Vector3f(0, 0, 1.0f);
         }
-        float costhe1, costhe2;
-        Vector3f ome_t;
-        float rate_c = pow(eta1 / eta2, 2.0f);
-        rate_c *= 1.0f - pow(bRec.wi.dot(n), 2.0f);
-        rate_c = 1.0f - rate_c;
-        bRec.wo = Vector3f(
-            -bRec.wi.x(),
-            -bRec.wi.y(),
-             bRec.wi.z()
-        );
-        bRec.eta = 1.0f;
-        if (rate_c > 0.0f) {
-            ome_t = - n * sqrt(rate_c);
-            ome_t -= (eta1 / eta2) * (bRec.wi - bRec.wi.dot(n) * n);
-            costhe1 = fabs(Frame::cosTheta(bRec.wi));
-            costhe2 = fabs(Frame::cosTheta(ome_t));
-            float rho1, rho2, Fr;
-            rho1 = (eta2 * costhe1 - eta1 * costhe2) / (eta2 * costhe1 + eta1 * costhe2);
-            rho2 = (eta1 * costhe1 - eta2 * costhe2) / (eta1 * costhe1 + eta2 * costhe2);
-            Fr = 0.5f * (rho1 * rho1 + rho2 * rho2);
-            if (sample.x() > Fr) {
-                bRec.wo = ome_t;
-                bRec.eta = eta1 / eta2;
-            }
+        float F = fresnel(fabs(Frame::cosTheta(bRec.wi)), eta1, eta2);
+        if (sample.x() > F) {
+            float eta = eta1 / eta2;
+            float weight0 = bRec.wi.dot(n);
+            weight0 = sqrt(1.0f - eta * eta * (1 - weight0 * weight0));
+            Vector3f wt = - weight0 * n;
+            wt -= eta * (bRec.wi - bRec.wi.dot(n) * n);
+
+            bRec.wo = wt;
+            bRec.eta = eta;
         }
-        return Color3f(1.0f);
+        else {
+            bRec.wo = 2 * n * bRec.wi.dot(n) - bRec.wi;
+            bRec.eta = 1.0f;
+        }
+        if (Frame::cosTheta(bRec.wo) == 0.0f)
+            return Color3f(0.0f);
+
+        return Color3f(bRec.eta * bRec.eta);
     }
 
     std::string toString() const {

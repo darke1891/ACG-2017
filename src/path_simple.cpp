@@ -92,7 +92,7 @@ public:
             if ((re_color.r() != 0.0f) || (re_color.g() != 0.0f) || (re_color.b() != 0.0f)) {
                 Ray3f new_ray(its.p, its.shFrame.toWorld(bRec.wo));
                 Color3f re_Lix = Li(scene, sampler, new_ray, bsdf->isDiffuse());
-                res += re_Lix * re_color / xi_threshold * bRec.eta * bRec.eta;
+                res += re_Lix * re_color / xi_threshold;
             }
         }
 

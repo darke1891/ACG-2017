@@ -100,7 +100,7 @@ public:
                 Color3f re_color = bsdf->sample(bRec, re_sample);
                 Ray3f new_ray(its.p, its.shFrame.toWorld(bRec.wo));
                 Color3f re_Lix = Li(scene, sampler, new_ray, true);
-                res += re_Lix * re_color / xi_threshold * bRec.eta * bRec.eta;
+                res += re_Lix * re_color / xi_threshold;
             }
         }
 
