@@ -50,19 +50,19 @@ public:
         m_ks = 1 - m_kd.maxCoeff();
     }
 
-    float DW(const Vector3f &w) const{
+    float DW(const Vector3f &w, float alpha) const{
         if (Frame::cosTheta(w) <= 0.0f)
             return 0.0f;
         float ct, ct2, st2, al2;
         ct = Frame::cosTheta(w);
         ct2 = ct * ct;
         st2 = 1 - ct2;
-        al2 = m_alpha * m_alpha;
+        al2 = alpha * alpha;
         return exp(-st2 / ct2 / al2) * INV_PI / al2 / ct2 / ct2;
 
     }
 
-    float G1(const Vector3f &w, const Vector3f &wh) const {
+    float G1(const Vector3f &w, const Vector3f &wh, float alpha) const {
         if (w.dot(wh) * Frame::cosTheta(w) <= 0.0f)
             return 0.0f;
 
@@ -72,7 +72,7 @@ public:
         if (st <= 0.0f)
             b = 100.0f;
         else
-            b = ct / m_alpha / st;
+            b = ct / alpha / st;
         float b2 = b * b;
         if (b < 1.6f)
             return (3.535f * b + 2.181f * b2) / (1.0f + 2.276f * b + 2.577f * b2);
@@ -88,6 +88,8 @@ public:
             || Frame::cosTheta(bRec.wo) == 0.0f)
             return Color3f(0.0f);
 
+        float alpha = (1.2f - 0.2f * sqrt(fabs(Frame::cosTheta(bRec.wi)))) * m_alpha;
+
         Vector3f wi, wo, n, wh;
         float eta1, eta2;
         wi = bRec.wi;
@@ -108,17 +110,17 @@ public:
             wh.normalize();
             if (Frame::cosTheta(wi) < 0.0f)
                 wh *= -1.0f;
-            if (G1(wi, wh) <= 0.0f)
+            if (G1(wi, wh, alpha) <= 0.0f)
                 return Color3f(0.0f);
-            if (G1(wo, wh) <= 0.0f)
+            if (G1(wo, wh, alpha) <= 0.0f)
                 return Color3f(0.0f);
             if (Frame::cosTheta(wh) <= 0.0f)
                 return Color3f(0.0f);
 
             float F = fresnel(fabs(wh.dot(wi)), eta1, eta2);
             res = F;
-            res *= DW(wh);
-            res *= G1(wi, wh) * G1(wo, wh);
+            res *= DW(wh, alpha);
+            res *= G1(wi, wh, alpha) * G1(wo, wh, alpha);
             res /= 4.0f * fabs(Frame::cosTheta(bRec.wi) * Frame::cosTheta(wo) * Frame::cosTheta(wh));
 
         }
@@ -126,9 +128,9 @@ public:
             wh = -(eta1 * wi + eta2 * wo);
             wh.normalize();
 
-            if (G1(wi, wh) <= 0.0f)
+            if (G1(wi, wh, alpha) <= 0.0f)
                 return Color3f(0.0f);
-            if (G1(wo, wh) <= 0.0f)
+            if (G1(wo, wh, alpha) <= 0.0f)
                 return Color3f(0.0f);
             if (Frame::cosTheta(wh) <= 0.0f)
                 return Color3f(0.0f);
@@ -139,8 +141,8 @@ public:
 
             res = 1.0f - F;
             res /= weight0 * weight0;
-            res *= DW(wh);
-            res *= G1(wi, wh) * G1(wo, wh);
+            res *= DW(wh, alpha);
+            res *= G1(wi, wh, alpha) * G1(wo, wh, alpha);
             res /= fabs(Frame::cosTheta(wi) * Frame::cosTheta(wo) * Frame::cosTheta(wh));
             res *= fabs(wo.dot(wh) * wi.dot(wh));
         }
@@ -155,6 +157,8 @@ public:
             || Frame::cosTheta(bRec.wo) == 0.0f)
             return 0.0f;
 
+        float alpha = (1.2f - 0.2f * sqrt(fabs(Frame::cosTheta(bRec.wi)))) * m_alpha;
+
         Vector3f wi, wo, n, wh;
         float eta1, eta2;
         wi = bRec.wi;
@@ -175,9 +179,9 @@ public:
             wh.normalize();
             if (Frame::cosTheta(wi) < 0.0f)
                 wh *= -1.0f;
-            if (G1(wi, wh) <= 0.0f)
+            if (G1(wi, wh, alpha) <= 0.0f)
                 return 0.0f;
-            if (G1(wo, wh) <= 0.0f)
+            if (G1(wo, wh, alpha) <= 0.0f)
                 return 0.0f;
             if (Frame::cosTheta(wh) <= 0.0f)
                 return 0.0f;
@@ -186,7 +190,7 @@ public:
             res = F;
             res /= 4.0f * fabs(wh.dot(wo));
 
-            res *= DW(wh);
+            res *= DW(wh, alpha);
             res *= fabs(Frame::cosTheta(wh));
 
         }
@@ -194,9 +198,9 @@ public:
             wh = -(eta1 * wi + eta2 * wo);
             wh.normalize();
 
-            if (G1(wi, wh) <= 0.0f)
+            if (G1(wi, wh, alpha) <= 0.0f)
                 return 0.0f;
-            if (G1(wo, wh) <= 0.0f)
+            if (G1(wo, wh, alpha) <= 0.0f)
                 return 0.0f;
             if (Frame::cosTheta(wh) <= 0.0f)
                 return 0.0f;
@@ -208,7 +212,7 @@ public:
             res /= weight0 * weight0;
             res *= fabs(wo.dot(wh));
 
-            res *= DW(wh);
+            res *= DW(wh, alpha);
             res *= fabs(Frame::cosTheta(wh));
         }
 
@@ -221,13 +225,14 @@ public:
             return Color3f(0.0f);
 
         bRec.measure = ESolidAngle;
+        float alpha = (1.2f - 0.2f * sqrt(fabs(Frame::cosTheta(bRec.wi)))) * m_alpha;
 
         Point2f new_sample = Point2f(_sample.x(), _sample.y());
 
-        Vector3f wh = Warp::squareToBeckmann(new_sample, m_alpha);
-        if (Warp::squareToBeckmannPdf(wh, m_alpha) <= 0.0f)
+        Vector3f wh = Warp::squareToBeckmann(new_sample, alpha);
+        if (Warp::squareToBeckmannPdf(wh, alpha) <= 0.0f)
             return Color3f(0.0f);
-        if (G1(bRec.wi, wh) <= 0.0f)
+        if (G1(bRec.wi, wh, alpha) <= 0.0f)
             return Color3f(0.0f);
         float sample2 = bRec.sampler->next1D();
 
@@ -265,7 +270,7 @@ public:
                 return Color3f(0.0f);
         }
 
-        if (G1(bRec.wo, wh) <= 0.0f)
+        if (G1(bRec.wo, wh, alpha) <= 0.0f)
             return Color3f(0.0f);
 
         double pdf_rec = pdf(bRec);
