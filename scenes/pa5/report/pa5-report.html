@@ -9,6 +9,8 @@ Feedback
 
 * 10 hours for part 2-3 and report.
 
+* 4 hours for hacker points
+
 Part 1.1, 1.2: Beckmann distribution
 ===========================================
 
@@ -36,6 +38,19 @@ Part 1.3, 1.4: Microfacet BRDF
 
 * A problem I met is that I forgot to scale the sample points to reuse it later. In 'warptest', 'kd' is always (0, 0, 0), so I spent almost a hour to find the bug.
 
+Smooth Ajax
+
+<div class="twentytwenty-container">
+    <img src="images/ajax-smooth-ref.png" alt="Reference">
+    <img src="images/ajax-smooth.png" alt="Mine">
+</div>
+
+Rough Ajax
+
+<div class="twentytwenty-container">
+    <img src="images/ajax-rough-ref.png" alt="Reference">
+    <img src="images/ajax-rough.png" alt="Mine">
+</div>
 
 Part2: Simple Path tracer
 =============================================
@@ -49,12 +64,72 @@ Part2: Simple Path tracer
 
 * Then, I just use code from 'whitted.cpp'. I also add some check to avoid Nan value.
 
+cbox scene
+
+<div class="twentytwenty-container">
+    <img src="images/cbox-ref.png" alt="Reference">
+    <img src="images/cbox.png" alt="Mine">
+</div>
+
+table scene
+
+<div class="twentytwenty-container">
+    <img src="images/table-path-simple-ref.png" alt="Reference">
+    <img src="images/table-path-simple.png" alt="Mine">
+</div>
+
+veach scene
+
+<div class="twentytwenty-container">
+    <img src="images/veach-path-simple-ref.png" alt="Reference">
+    <img src="images/veach-path-simple.png" alt="Mine">
+</div>
+
+different strategy for light source sampleing
+
+<div class="twentytwenty-container">
+    <img src="images/veach-path-simple-previous.png" alt="Previous strategy">
+    <img src="images/veach-path-simple.png" alt="New strategy">
+</div>
+
+
+
 Part3: Path tracer with Multiple Importance Sampling
 =====================================================
 * I choose to convert probability to measure with respect to solid angles. Then $ p_{Light} = p_{Light\ in\ area} \frac{r^2}{\cos \theta} $ because the area on surface can be larger than area through light direction.
 
 * Another thing need to be modified is that as we use multiple important sampling now, double counting is different sample method now, so we don't remove $ L_e $ term if it's from BRDF sample and hits a light source. Instead, we can weight samples.
 
+table scene
+
+<div class="twentytwenty-container">
+    <img src="images/table-path-ref.png" alt="Reference">
+    <img src="images/table-path.png" alt="Mine">
+</div>
+
+veach scene
+
+<div class="twentytwenty-container">
+    <img src="images/veach-path-ref.png" alt="Reference">
+    <img src="images/veach-path.png" alt="Mine">
+</div>
+
+Hacker Points
+================================================================
+* This part is close to 'microfacet' we implement in part1, but we need the third random number to select between reflection and refraction. So I add a 'Sampler*' to 'BSDFQueryRecord' and change every place where nori need to construct a BSDFQueryRecord object. I also need to add some code in 'warptest.cpp' to make sure it supports this BSDF.
+
+* Then, I use the same chi2test file we use in part1, and I can pass 14/15. In the one I can't pass, according to the m file that chi2test generates, most rays are in a narrow range, which means the probability changes very fast somewhere, and sampling resolution is not enough to handle this.  So I think it's not a problem.
+
+* In 'chi2test.cpp', I add one line to make some rays are from inside (I comment it now, but you can find it by searching 'complete BSDF'). Then we can find that my implementation can pass all chi2test.
+
+* There is a mistake in the paper, where $ o_t $ is given in a wrong place (equation 40). In the slides we can find the correct one.
+
+* Then I use my rough dielectric BSDF to render two images. I use ajax from this assignment, and background from assignment 4. In both image, intIOR = 1.7.
+
+<div class="twentytwenty-container">
+    <img src="images/ajax-smooth-micro.png" alt="Smooth, alpha = 0.08">
+    <img src="images/ajax-rough-micro.png" alt="Rough, alpha = 0.5">
+</div>
 
 
 
