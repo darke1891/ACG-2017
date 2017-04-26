@@ -36,6 +36,18 @@ public:
         /* Exterior IOR (default: air) */
         m_extIOR = propList.getFloat("extIOR", 1.000277f);
 
+        /* Albedo of the diffuse base material (a.k.a "kd") */
+        m_kd = propList.getColor("kd", Color3f(0.5f));
+
+        /* To ensure energy conservation, we must scale the 
+           specular component by 1-kd. 
+
+           While that is not a particularly realistic model of what 
+           happens in reality, this will greatly simplify the 
+           implementation. Please see the course staff if you're 
+           interested in implementing a more realistic version 
+           of this BRDF. */
+        m_ks = 1 - m_kd.maxCoeff();
     }
 
     float DW(const Vector3f &w) const{
@@ -273,15 +285,21 @@ public:
             "  alpha = %f,\n"
             "  intIOR = %f,\n"
             "  extIOR = %f,\n"
+            "  kd = %s,\n"
+            "  ks = %f\n"
             "]",
             m_alpha,
             m_intIOR,
-            m_extIOR
+            m_extIOR,
+            m_kd.toString(),
+            m_ks
         );
     }
 private:
     float m_alpha;
     float m_intIOR, m_extIOR;
+    float m_ks;
+    Color3f m_kd;
 };
 
 NORI_REGISTER_CLASS(RoughDielectric, "roughdielectric");

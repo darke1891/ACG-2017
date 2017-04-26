@@ -3,8 +3,7 @@
     <integrator type="path"/>
 
     <sampler type="independent">
-        <!-- You might want to reduce this number during development -->
-        <integer name="sampleCount" value="64"/>
+        <integer name="sampleCount" value="512"/>
     </sampler>
 
     <camera type="perspective">
@@ -29,7 +28,7 @@
         </transform>
         <bsdf type="roughdielectric">
             <float name="intIOR" value="1.7"/>
-            <float name="alpha" value="0.08"/>
+            <float name="alpha" value="0.5"/>
         </bsdf>
     </mesh>
 
