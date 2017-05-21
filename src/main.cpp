@@ -30,6 +30,8 @@
 #include <filesystem/resolver.h>
 #include <thread>
 
+#define NORI_SCREEN 1
+
 using namespace nori;
 
 static void renderBlock(const Scene *scene, Sampler *sampler, ImageBlock &block) {
@@ -77,7 +79,9 @@ static void render(Scene *scene, const std::string &filename) {
 
     /* Create a window that visualizes the partially rendered result */
     nanogui::init();
-    NoriScreen *screen = new NoriScreen(result);
+    #if NORI_SCREEN == 1
+        NoriScreen *screen = new NoriScreen(result);
+    #endif
 
     /* Do the following in parallel and asynchronously */
     std::thread render_thread([&] {
@@ -127,7 +131,9 @@ static void render(Scene *scene, const std::string &filename) {
     /* Shut down the user interface */
     render_thread.join();
 
-    delete screen;
+    #if NORI_SCREEN == 1
+        delete screen;
+    #endif
     nanogui::shutdown();
 
     /* Now turn the rendered image block into

@@ -19,39 +19,32 @@
 #pragma once
 
 #include <nori/object.h>
-#include <nori/mesh.h>
+#include <nori/emitter.h>
+#include <nori/intersection.h>
 
 NORI_NAMESPACE_BEGIN
 
-struct EmitterSample {
-    Point3f point;
-    Vector3f normal;
-    Color3f radiance;
-    float probability_density;
-};
+struct Intersection;
 
-/**
- * \brief Superclass of all emitters
- */
-class Emitter : public NoriObject {
+class SceneBox : public NoriObject {
 public:
 
     /**
      * \brief Return the type of object (i.e. Mesh/Emitter/etc.) 
      * provided by this instance
      * */
-    EClassType getClassType() const { return EEmitter; }
+    EClassType getClassType() const { return ESceneBox; }
 
-    virtual void emit_activate(Mesh *mesh) {
-        throw NoriException("Emitter::emit_activate(mesh): This emitter doesn't need parent mesh!");
-    }
+    /// Return a pointer to an attached area emitter instance (const version)
+    virtual const Emitter *getEmitter() const = 0;
 
-    virtual EmitterSample sample(Point2f &p) const = 0;
-    virtual Color3f hit(Point3f p) const = 0;
-    virtual float get_pdf() const = 0;
-    virtual bool for_scene() const {
-        return false;
-    }
+    /// Return a pointer to the BSDF associated with this mesh
+    virtual const BSDF *getBSDF() const = 0;
+
+    virtual bool rayIntersect(const Ray3f &ray, Intersection &its) const = 0;
+
+    virtual void activate() = 0;
+
 };
 
 NORI_NAMESPACE_END

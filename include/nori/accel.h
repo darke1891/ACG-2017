@@ -16,8 +16,7 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#if !defined(__NORI_BVH_H)
-#define __NORI_BVH_H
+#pragma once
 
 #include <nori/mesh.h>
 
@@ -171,5 +170,3 @@ private:
 };
 
 NORI_NAMESPACE_END
-
-#endif /* __NORI_BVH_H */

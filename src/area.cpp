@@ -31,7 +31,8 @@ Color3f AreaLight::hit(Point3f p) const {
 }
 
 float AreaLight::get_pdf() const {
-    return probability_density;
+    float light = radiance.x() + radiance.y() + radiance.z();
+    return probability_density * light;
 }
 
 void AreaLight::emit_activate(Mesh *parent) {

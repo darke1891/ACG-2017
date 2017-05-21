@@ -19,6 +19,7 @@
 #pragma once
 
 #include <nori/accel.h>
+#include <nori/scenebox.h>
 
 NORI_NAMESPACE_BEGIN
 
@@ -72,9 +73,7 @@ public:
      *
      * \return \c true if an intersection was found
      */
-    bool rayIntersect(const Ray3f &ray, Intersection &its) const {
-        return m_accel->rayIntersect(ray, its, false);
-    }
+    bool rayIntersect(const Ray3f &ray, Intersection &its) const;
 
     /**
      * \brief Intersect a ray against all triangles stored in the scene
@@ -91,15 +90,10 @@ public:
      *
      * \return \c true if an intersection was found
      */
-    bool rayIntersect(const Ray3f &ray) const {
-        Intersection its; /* Unused */
-        return m_accel->rayIntersect(ray, its, true);
-    }
+    bool rayIntersect(const Ray3f &ray) const;
 
     /// \brief Return an axis-aligned box that bounds the scene
-    const BoundingBox3f &getBoundingBox() const {
-        return m_accel->getBoundingBox();
-    }
+    const BoundingBox3f &getBoundingBox() const;
 
     /**
      * \brief Inherited from \ref NoriObject::activate()
@@ -122,6 +116,7 @@ private:
     Sampler *m_sampler = nullptr;
     Camera *m_camera = nullptr;
     Accel *m_accel = nullptr;
+    SceneBox *m_box = nullptr;
 };
 
 NORI_NAMESPACE_END

@@ -20,6 +20,7 @@
 #include <nori/bsdf.h>
 #include <nori/bitmap.h>
 #include <nori/sampler.h>
+#include <nori/hierarchical.h>
 #include <nanogui/screen.h>
 #include <nanogui/glutil.h>
 #include <nanogui/label.h>
@@ -439,11 +440,6 @@ public:
 
         if (warpType != Square && warpType != Disk && warpType != Tent && warpType != Hierarchical)
             xres *= 2;
-        else if (warpType == Hierarchical) {
-            xres = 32;
-            yres = 32;
-            h_sampler.setTestLayer(xres, yres);
-        }
 
         int res = yres*xres, sampleCount = 1000 * res;
         std::unique_ptr<double[]> obsFrequencies(new double[res]);
@@ -802,7 +798,7 @@ public:
         setVisible(true);
         framebufferSizeChanged();
     }
-    Warp::HierarchicalSampler h_sampler;
+    nori::HierarchicalSampler h_sampler;
 private:
     GLShader *m_pointShader = nullptr;
     GLShader *m_gridShader = nullptr;
@@ -833,8 +829,7 @@ int main(int argc, char **argv) {
     if (argc == 2) {
         filesystem::path path(argv[1]);
         if (path.extension() == "exr") {
-            Bitmap bitmap(argv[1]);
-            screen->h_sampler.setImage(bitmap);
+            screen->h_sampler.setImage(argv[1]);
         }
     }
 

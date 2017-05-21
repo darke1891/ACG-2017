@@ -22,6 +22,7 @@
 #include <nori/sampler.h>
 #include <nori/camera.h>
 #include <nori/emitter.h>
+#include <nori/scenebox.h>
 
 NORI_NAMESPACE_BEGIN
 
@@ -65,11 +66,17 @@ void Scene::addChild(NoriObject *obj) {
             break;
         
         case EEmitter: {
-                //Emitter *emitter = static_cast<Emitter *>(obj);
+                // Emitter *emitter = static_cast<Emitter *>(obj);
                 /* TBD */
                 throw NoriException("Scene::addChild(): You need to implement this for emitters");
             }
             break;
+        case ESceneBox: {
+            if (m_box)
+                throw NoriException("There can only be one scene box!");
+            m_box = static_cast<SceneBox *>(obj);
+            break;
+        }
 
         case ESampler:
             if (m_sampler)
@@ -93,6 +100,30 @@ void Scene::addChild(NoriObject *obj) {
             throw NoriException("Scene::addChild(<%s>) is not supported!",
                 classTypeName(obj->getClassType()));
     }
+}
+
+bool Scene::rayIntersect(const Ray3f &ray, Intersection &its) const {
+    bool res_hit = m_accel->rayIntersect(ray, its, false);
+    if (m_box) {
+        Intersection its_box;
+        bool box_hit = m_box->rayIntersect(ray, its_box);
+        if (box_hit) {
+            if ((!res_hit) || (its_box.t < its.t)) {
+                res_hit = box_hit;
+                its = its_box;
+            }
+        }
+    }
+    return res_hit;
+}
+
+bool Scene::rayIntersect(const Ray3f &ray) const {
+    Intersection its; /* Unused */
+    return m_accel->rayIntersect(ray, its, true);
+}
+
+const BoundingBox3f &Scene::getBoundingBox() const {
+    return m_accel->getBoundingBox();
 }
 
 std::string Scene::toString() const {

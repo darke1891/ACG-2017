@@ -25,8 +25,8 @@ public:
 
         const BSDF *bsdf;
         const Emitter *emitter;
-        bsdf = its.mesh->getBSDF();
-        emitter = its.mesh->getEmitter();
+        bsdf = its.getBSDF();
+        emitter = its.getEmitter();
         BSDFQueryRecord bRec(Vector3f(0.0f, 0.0f, 0.0f), sampler);
 
         const std::vector<Mesh *> meshs = scene->getMeshes();

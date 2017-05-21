@@ -20,7 +20,7 @@
 
 #include <nori/common.h>
 #include <nori/sampler.h>
-#include <nori/bitmap.h>
+#include <nori/hierarchical.h>
 #include <vector>
 
 NORI_NAMESPACE_BEGIN
@@ -28,8 +28,6 @@ NORI_NAMESPACE_BEGIN
 /// A collection of useful warping functions for importance sampling
 class Warp {
 public:
-    class HierarchicalSampler;
-
     /// Dummy warping function: takes uniformly distributed points in a square and just returns them
     static Point2f squareToUniformSquare(const Point2f &sample);
 
@@ -75,20 +73,6 @@ public:
     static Point2f squareToHierarchical(const Point2f &sample, HierarchicalSampler &h_sampler);
 
     static float squareToHierarchicalPdf(const Point2f &p, HierarchicalSampler &h_sampler);
-
-    class HierarchicalSampler {
-    public:
-        HierarchicalSampler ();
-        void setImage(Bitmap &bitmap);
-        float squareToHierarchicalPdf(const Point2f &p);
-        Point2f squareToHierarchical(Point2f sample);
-        Point2f squareToHierarchical(Point2f sample, int x, int y, int layer);
-        void setTestLayer(int xres, int yres);
-    private:
-        typedef Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> hieImage;
-        std::vector<hieImage> layers;
-        hieImage for_pdf;
-    };
 
 };
 

@@ -62,6 +62,9 @@ add_executable(nori
   include/nori/transform.h
   include/nori/vector.h
   include/nori/warp.h
+  include/nori/hierarchical.h
+  include/nori/scenebox.h
+  include/nori/intersection.h
 
   # Source code files
   src/bitmap.cpp
@@ -94,6 +97,9 @@ add_executable(nori
   src/path_simple.cpp
   src/path.cpp
   src/roughdielectric.cpp
+  src/imagebasedsphere.cpp
+  src/hierarchical.cpp
+  src/intersection.cpp
 )
 
 add_definitions(${NANOGUI_EXTRA_DEFS})
@@ -102,6 +108,7 @@ add_definitions(${NANOGUI_EXTRA_DEFS})
 add_executable(warptest
   include/nori/warp.h
   include/nori/bitmap.h
+  include/nori/hierarchical.h
   src/warp.cpp
   src/warptest.cpp
   src/microfacet.cpp
@@ -111,6 +118,7 @@ add_executable(warptest
   src/bitmap.cpp
   src/roughdielectric.cpp
   src/independent.cpp
+  src/hierarchical.cpp
 )
 
 target_link_libraries(nori tbb_static pugixml IlmImf nanogui ${NANOGUI_EXTRA_LIBS})

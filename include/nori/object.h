@@ -36,6 +36,7 @@ public:
         EBSDF,
         EPhaseFunction,
         EEmitter,
+        ESceneBox,
         EMedium,
         ECamera,
         EIntegrator,
@@ -94,6 +95,7 @@ public:
             case EMesh:       return "mesh";
             case EBSDF:       return "bsdf";
             case EEmitter:    return "emitter";
+            case ESceneBox:   return "scenebox";
             case ECamera:     return "camera";
             case EIntegrator: return "integrator";
             case ESampler:    return "sampler";
