@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='utf-8'?>
 
 <scene>
-	<integrator type="path_simple"/>
+	<integrator type="path"/>
 
 	<camera type="perspective">
 		<float name="fov" value="40"/>
 		<transform name="toWorld">
-			<scale value="-1,1,1"/>
+			<scale value="1,1,1"/>
 			<lookat target="0, 0.6, 3.0" origin="0, 0.6, 3.6" up="0, 1, 0"/>
 		</transform>
 
@@ -15,8 +15,16 @@
 	</camera>
 	
 	<sampler type="independent">
-		<integer name="sampleCount" value="32"/>
+		<integer name="sampleCount" value="64"/>
 	</sampler>
+
+	<mesh type="obj">
+		<string name="filename" value="meshes/walls.obj"/>
+
+		<bsdf type="diffuse">
+			<color name="albedo" value="0.725 0.71 0.68"/>
+		</bsdf>
+	</mesh>
 
 	<mesh type="obj">
 		<string name="filename" value="meshes/sphere1.obj"/>
@@ -30,18 +38,11 @@
 		<bsdf type="dielectric"/>
 	</mesh>
 
-	<mesh type="obj">
-		<string name="filename" value="meshes/light.obj"/>
-
-		<emitter type="area">
-			<color name="radiance" value="40 40 40"/>
-		</emitter>
-	</mesh>
-
 	<scenebox type="image-based-sphere">
 		<point name="center" value="0, 0, 0"/>
-		<float name="radius" value="4.0"/>
+		<float name="radius" value="5.0"/>
 		<string name="light-image" value="meshes/glacier-small.exr"/>
+		<float name="scale" value="0.5"/>
 	</scenebox>
 
 </scene>

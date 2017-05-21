@@ -13,6 +13,6 @@ for i in range(0, 3):
 			image2[ii + l][jj + l][i] = 0.16 * m
 cv2.imwrite('ttt.exr', image2)
 
-l2 = 512
+l2 = 1024
 image3 = cv2.resize(image, (l2, l2))
 cv2.imwrite('glacier-small.exr', image3)

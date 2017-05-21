@@ -29,9 +29,9 @@ public:
         BSDFQueryRecord bRec(Vector3f(0.0f, 0.0f, 0.0f), sampler);
 
         const std::vector<Mesh *> meshs = scene->getMeshes();
-        std::vector<int> mesh_idx;
+        std::vector<const Emitter *> emitters;
+        emitters.clear();
         const Emitter *emitter2;
-        mesh_idx.clear();
         DiscretePDF dpdf;
         dpdf.clear();
         for (uint32_t idx = 0; idx < meshs.size(); idx++) {
@@ -39,8 +39,14 @@ public:
             if (emitter2 == nullptr)
                 continue;
             dpdf.append(1.0f);
-            mesh_idx.push_back(idx);
+            emitters.push_back(emitter2);
         }
+        const SceneBox *sbox = scene->get_scenebox();
+        if (sbox)
+            if (sbox->getEmitter()) {
+                dpdf.append(1.0f);
+                emitters.push_back(sbox->getEmitter());
+            }
         dpdf.normalize();
 
         if (emitter != nullptr) {
@@ -58,13 +64,16 @@ public:
             float emitter_u = sampler->next1D();
             float emitter_pdf;
             size_t emitter_id = dpdf.sample(emitter_u, emitter_pdf);
-            emitter = meshs[mesh_idx[emitter_id]]->getEmitter();
+            emitter = emitters[emitter_id];
 
             Point2f sample = sampler->next2D();
             EmitterSample emitter_sample = emitter->sample(sample);
             Vector3f d = emitter_sample.point - its.p;
             Vector3f d_norm;
             float dis = d.norm();
+            float short_dis = 0.0001f;
+            if (dis < short_dis)
+                dis = short_dis;
             d_norm = d;
             d_norm.normalize();
             Ray3f newRay(its.p, d_norm, Epsilon, dis - Epsilon);

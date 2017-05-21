@@ -18,11 +18,12 @@ public:
     }
     virtual EmitterSample sample(Point2f &p) const;
     virtual Color3f hit(Point3f p) const;
-    virtual float get_pdf() const;
+    virtual float get_pdf(Point3f p) const;
     virtual bool for_scene() const;
 private:
     Point3f center;
     float radius;
+    float scale;
     HierarchicalSampler *hSampler = nullptr;
 };
 
@@ -110,6 +111,7 @@ void ImageBasedSphere::activate() {
 ImageBasedSphereEmitter::ImageBasedSphereEmitter(const PropertyList &props) {
     center = props.getPoint("center");
     radius = props.getFloat("radius");
+    scale = props.getFloat("scale", 1.0f);
     std::string file_name = props.getString("light-image", "");
     hSampler = new HierarchicalSampler();
     hSampler->setImage(file_name);
@@ -121,6 +123,18 @@ ImageBasedSphereEmitter::~ImageBasedSphereEmitter() {
 
 EmitterSample ImageBasedSphereEmitter::sample(Point2f &p) const {
     EmitterSample sample;
+    Point2f pick = hSampler->squareToHierarchical(p);
+    sample.probability_density = hSampler->squareToHierarchicalPdf(pick);
+    sample.probability_density /= radius * radius * M_PI * 4.0f;
+    sample.normal.y() = pick.y() * 2.0f - 1.0f;
+    float xz = sqrt(1.0f - sample.normal.y() * sample.normal.y());
+    sample.normal.x() = - cos(pick.x() * 2.0f * M_PI) * xz;
+    sample.normal.z() = - sin(pick.x() * 2.0f * M_PI) * xz;
+    sample.normal *= -1.0f;
+    sample.normal.normalize();
+
+    sample.point = center - sample.normal * radius;
+    sample.radiance = hSampler->hit(pick) * scale;
     return sample;
 }
 
@@ -135,11 +149,23 @@ Color3f ImageBasedSphereEmitter::hit(Point3f p) const {
     if (po.z() > 0.0f)
         p2.x() = 2.0f * M_PI - p2.x();
     p2.x() /= 2.0f * M_PI;
-    return hSampler->hit(p2);
+    return hSampler->hit(p2) * scale;
 }
 
-float ImageBasedSphereEmitter::get_pdf() const {
-    return hSampler->get_mean() * radius * M_PI * radius * 2.0f;
+float ImageBasedSphereEmitter::get_pdf(Point3f p) const {
+    Point3f po = p - center;
+    po.normalize();
+    Point2f p2;
+    p2.y() = (po.y() + 1.0f) / 2.0f;
+    po.y() = 0.0f;
+    po.normalize();
+    p2.x() = acos(- po.x());
+    if (po.z() > 0.0f)
+        p2.x() = 2.0f * M_PI - p2.x();
+    p2.x() /= 2.0f * M_PI;
+    float res = hSampler->squareToHierarchicalPdf(p2);
+    res /= radius * radius * M_PI * 4.0f;
+    return res;
 }
 
 bool ImageBasedSphereEmitter::for_scene() const {

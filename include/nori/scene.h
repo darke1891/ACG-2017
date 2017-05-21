@@ -110,6 +110,8 @@ public:
     std::string toString() const;
 
     EClassType getClassType() const { return EScene; }
+
+    const SceneBox *get_scenebox() const {return m_box;}
 private:
     std::vector<Mesh *> m_meshes;
     Integrator *m_integrator = nullptr;

@@ -31,8 +31,8 @@ public:
 
         const std::vector<Mesh *> meshs = scene->getMeshes();
         const Emitter *emitter2;
-        std::vector<int> mesh_idx;
-        mesh_idx.clear();
+        std::vector<const Emitter *> emitters;
+        emitters.clear();
         DiscretePDF dpdf;
         dpdf.clear();
         for (uint32_t idx = 0; idx < meshs.size(); idx++) {
@@ -40,8 +40,15 @@ public:
             if (emitter2 == nullptr)
                 continue;
             dpdf.append(1.0f);
-            mesh_idx.push_back(idx);
+            emitters.push_back(emitter2);
         }
+        const SceneBox *sbox = scene->get_scenebox();
+        if (sbox)
+            if (sbox->getEmitter()) {
+                dpdf.append(1.0f);
+                emitters.push_back(sbox->getEmitter());
+            }
+        dpdf.normalize();
         float light_sum = dpdf.normalize();
 
         if (emitter != nullptr) {
@@ -51,7 +58,7 @@ public:
             if (d_direct.z() <= 0.0f)
                 direct_res *= 0.0f;
             else if (is_diffuse) {
-                pl = emitter->get_pdf();
+                pl = emitter->get_pdf(its.p);
                 pl /= light_sum;
                 pl /= d_direct.z();
                 pl *= its.t * its.t;
@@ -64,13 +71,16 @@ public:
             float emitter_u = sampler->next1D();
             float emitter_pdf;
             size_t emitter_id = dpdf.sample(emitter_u, emitter_pdf);
-            emitter = meshs[mesh_idx[emitter_id]]->getEmitter();
+            emitter = emitters[emitter_id];
 
             Point2f sample = sampler->next2D();
             EmitterSample emitter_sample = emitter->sample(sample);
             Vector3f d = emitter_sample.point - its.p;
             Vector3f d_norm;
             float dis = d.norm();
+            float short_dis = 0.0001f;
+            if (dis < short_dis)
+                dis = short_dis;
             d_norm = d;
             d_norm.normalize();
             Ray3f newRay(its.p, d_norm, Epsilon, dis - Epsilon);
@@ -90,7 +100,7 @@ public:
 
             pl = - emitter_sample.normal.dot(d_norm);
             if (pl > 0.0f) {
-                pl = emitter->get_pdf() / pl;
+                pl = emitter_sample.probability_density / pl;
                 pl *= emitter_pdf;
                 pl *= dis * dis;
                 pb = bsdf->pdf(bRec);
