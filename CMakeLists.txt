@@ -100,6 +100,7 @@ add_executable(nori
   src/imagebasedsphere.cpp
   src/hierarchical.cpp
   src/intersection.cpp
+  src/volumnhg.cpp
 )
 
 add_definitions(${NANOGUI_EXTRA_DEFS})
@@ -119,6 +120,7 @@ add_executable(warptest
   src/roughdielectric.cpp
   src/independent.cpp
   src/hierarchical.cpp
+  src/volumnhg.cpp
 )
 
 target_link_libraries(nori tbb_static pugixml IlmImf nanogui ${NANOGUI_EXTRA_LIBS})
