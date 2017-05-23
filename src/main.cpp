@@ -30,7 +30,7 @@
 #include <filesystem/resolver.h>
 #include <thread>
 
-#define NORI_SCREEN 1
+#define NORI_SCREEN 0
 
 using namespace nori;
 
@@ -77,9 +77,9 @@ static void render(Scene *scene, const std::string &filename) {
     ImageBlock result(outputSize, camera->getReconstructionFilter());
     result.clear();
 
-    /* Create a window that visualizes the partially rendered result */
-    nanogui::init();
     #if NORI_SCREEN == 1
+    nanogui::init();
+    /* Create a window that visualizes the partially rendered result */
         NoriScreen *screen = new NoriScreen(result);
     #endif
 
@@ -125,16 +125,18 @@ static void render(Scene *scene, const std::string &filename) {
         cout << "done. (took " << timer.elapsedString() << ")" << endl;
     });
 
-    /* Enter the application main loop */
-    nanogui::mainloop();
+    #if NORI_SCREEN == 1
+        /* Enter the application main loop */
+        nanogui::mainloop();
+    #endif
 
     /* Shut down the user interface */
     render_thread.join();
 
     #if NORI_SCREEN == 1
         delete screen;
-    #endif
     nanogui::shutdown();
+    #endif
 
     /* Now turn the rendered image block into
        a properly normalized bitmap */

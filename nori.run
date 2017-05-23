@@ -1,0 +1,15 @@
+#!/bin/bash -l
+
+#SBATCH --nodes              1
+#SBATCH --ntasks             1
+#SBATCH --cpus-per-task      16
+#SBATCH --time 00:10:00
+
+source /ssoft/spack/bin/slmodules.sh
+
+module load gcc
+
+cd scenes/t1
+
+srun ~/nori/build/nori cbox.xml
+
