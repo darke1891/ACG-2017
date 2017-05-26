@@ -26,15 +26,18 @@ const Emitter *Intersection::getEmitter() const {
         return mesh->getEmitter();
     else if (sbox)
         return sbox->getEmitter();
+    else
+        return m_emitter;
 }
 
 /// Return a pointer to the BSDF associated with this mesh
 const BSDF *Intersection::getBSDF() const {
     if (mesh)
         return mesh->getBSDF();
-    else if (sbox){
+    else if (sbox)
         return sbox->getBSDF();
-    }
+    else
+        return m_bsdf;
 }
 
 std::string Intersection::toString() const {

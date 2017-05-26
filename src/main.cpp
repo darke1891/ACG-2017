@@ -30,7 +30,8 @@
 #include <filesystem/resolver.h>
 #include <thread>
 
-#define NORI_SCREEN 0
+#define NORI_SCREEN 1
+#define NORI_PARALLEL 1
 
 using namespace nori;
 
@@ -114,13 +115,21 @@ static void render(Scene *scene, const std::string &filename) {
                    the "big" block that represents the entire image */
                 result.put(block);
             }
+
+            #if NORI_SCREEN == 0
+                cout << block.getOffset().x() << ' ' << block.getOffset().y() << endl;
+            #endif
         };
 
-        /// Uncomment the following line for single threaded rendering
-        // map(range);
+        #if NORI_PARALLEL == 0
+            /// Uncomment the following line for single threaded rendering
+            map(range);
+        #endif
 
-        /// Default: parallel rendering
-        tbb::parallel_for(range, map);
+        #if NORI_PARALLEL == 1
+            /// Default: parallel rendering
+            tbb::parallel_for(range, map);
+        #endif
 
         cout << "done. (took " << timer.elapsedString() << ")" << endl;
     });

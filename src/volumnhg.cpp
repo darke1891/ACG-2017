@@ -26,6 +26,8 @@ class VolumnHG : public BSDF {
 public:
     VolumnHG(const PropertyList &propList) {
         m_g = propList.getFloat("g", 0.0f);
+        m_color = propList.getColor("color", Color3f(1.0f));
+        m_a = propList.getFloat("albedo", 0.9f);
         float almost_one = 0.9999f;
         m_g = (m_g > almost_one)? almost_one : m_g;
         m_g = (m_g < -almost_one)? -almost_one : m_g;
@@ -39,45 +41,27 @@ public:
         return res;
     }
 
-    /// Evaluate the BRDF model
     Color3f eval(const BSDFQueryRecord &bRec) const {
-        /* This is a smooth BRDF -- return zero if the measure
-           is wrong, or when queried for illumination on the backside */
         if (bRec.measure != ESolidAngle
             || Frame::cosTheta(bRec.wi) != 1.0f)
             return Color3f(0.0f);
 
-        /* The BRDF is simply the albedo / pi */
-        return Color3f(1.0f) * HG_pdf(bRec);
+        return Color3f(1.0f) * HG_pdf(bRec) * m_a * m_color;
     }
 
-    /// Compute the density of \ref sample() wrt. solid angles
     float pdf(const BSDFQueryRecord &bRec) const {
-        /* This is a smooth BRDF -- return zero if the measure
-           is wrong, or when queried for illumination on the backside */
         if (bRec.measure != ESolidAngle
             || Frame::cosTheta(bRec.wi) != 1.0f)
             return 0.0f;
-
-
-        /* Importance sampling density wrt. solid angles:
-           cos(theta) / pi.
-
-           Note that the directions in 'bRec' are in local coordinates,
-           so Frame::cosTheta() actually just returns the 'z' component.
-        */
         return HG_pdf(bRec);
     }
 
-    /// Draw a a sample from the BRDF model
     Color3f sample(BSDFQueryRecord &bRec, const Point2f &sample) const {
         if (Frame::cosTheta(bRec.wi) != 1.0f)
             return Color3f(0.0f);
 
         bRec.measure = ESolidAngle;
 
-        /* Warp a uniformly distributed sample on [0,1]^2
-           to a direction on a cosine-weighted hemisphere */
         if (m_g == 0.0f) {
             bRec.wo = Warp::squareToUniformSphere(sample);
         }
@@ -94,11 +78,8 @@ public:
         }
 
 
-        /* Relative index of refraction: no change */
         bRec.eta = 1.0f;
 
-        /* eval() / pdf() * cos(theta) = albedo. There
-           is no need to call these functions. */
         float pdf_rec = pdf(bRec);
         if (pdf_rec <= 0.0f)
             return Color3f(0.0f);
@@ -120,6 +101,8 @@ public:
     }
 private:
     float m_g;
+    Color3f m_color;
+    float m_a;
 };
 
 NORI_REGISTER_CLASS(VolumnHG, "volumnHG");

@@ -49,8 +49,13 @@ struct Intersection {
 
     const SceneBox *sbox;
 
+    const Emitter *m_emitter;
+    const BSDF *m_bsdf;
+
+    bool is_surface;
+
     /// Create an uninitialized intersection record
-    Intersection() : mesh(nullptr), sbox(nullptr) { }
+    Intersection() : mesh(nullptr), sbox(nullptr), m_emitter(nullptr), m_bsdf(nullptr), is_surface(true) { }
 
     /// Transform a direction vector into the local shading frame
     Vector3f toLocal(const Vector3f &d) const {

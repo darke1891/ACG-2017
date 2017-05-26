@@ -58,6 +58,8 @@ public:
     /// Return a reference to the blue channel (const version)
     const float &b() const { return z(); }
 
+    const float maxValue() const { return std::max(x(), std::max(y(), z()));}
+
     /// Clamp to the positive range
     Color3f clamp() const { return Color3f(std::max(r(), 0.0f),
         std::max(g(), 0.0f), std::max(b(), 0.0f)); }

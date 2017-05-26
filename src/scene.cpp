@@ -28,6 +28,10 @@ NORI_NAMESPACE_BEGIN
 
 Scene::Scene(const PropertyList &) {
     m_accel = new Accel();
+
+    PropertyList m_list;
+    m_bsdf = (BSDF *)(NoriObjectFactory::createInstance("volumnHG", m_list));
+    theta_t = 1.0f;
 }
 
 Scene::~Scene() {
@@ -102,7 +106,7 @@ void Scene::addChild(NoriObject *obj) {
     }
 }
 
-bool Scene::rayIntersect(const Ray3f &ray, Intersection &its) const {
+bool Scene::rayIntersect(const Ray3f &ray, Intersection &its, Sampler *sampler) const {
     bool res_hit = m_accel->rayIntersect(ray, its, false);
     if (m_box) {
         Intersection its_box;
@@ -114,12 +118,26 @@ bool Scene::rayIntersect(const Ray3f &ray, Intersection &its) const {
             }
         }
     }
+    if ((m_bsdf) && (theta_t > 0.0f)) {
+        float dis = sampler->next1D();
+        dis = -(log(dis) / theta_t);
+        if ((res_hit) && ((dis < its.t) && (dis < ray.maxt))) {
+            res_hit = true;
+            its = Intersection();
+            its.t = dis;
+            its.p = ray.o + dis * ray.d;
+            its.shFrame = Frame((- ray.d).normalized());
+            its.geoFrame = its.shFrame;
+            its.m_bsdf = m_bsdf;
+            its.is_surface = false;
+        }
+    }
     return res_hit;
 }
 
-bool Scene::rayIntersect(const Ray3f &ray) const {
-    Intersection its; /* Unused */
-    return m_accel->rayIntersect(ray, its, true);
+bool Scene::rayIntersect(const Ray3f &ray, Sampler *sampler) const {
+    Intersection its;
+    return rayIntersect(ray, its, sampler);
 }
 
 const BoundingBox3f &Scene::getBoundingBox() const {

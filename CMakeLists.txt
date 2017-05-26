@@ -101,6 +101,7 @@ add_executable(nori
   src/hierarchical.cpp
   src/intersection.cpp
   src/volumnhg.cpp
+  src/loop.cpp
 )
 
 add_definitions(${NANOGUI_EXTRA_DEFS})
