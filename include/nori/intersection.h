@@ -22,6 +22,7 @@
 #include <nori/frame.h>
 #include <nori/mesh.h>
 #include <nori/scenebox.h>
+#include <nori/volumemedia.h>
 
 NORI_NAMESPACE_BEGIN
 
@@ -51,11 +52,12 @@ struct Intersection {
 
     const Emitter *m_emitter;
     const BSDF *m_bsdf;
+    const VolumeMedia *new_media;
 
     bool is_surface;
 
     /// Create an uninitialized intersection record
-    Intersection() : mesh(nullptr), sbox(nullptr), m_emitter(nullptr), m_bsdf(nullptr), is_surface(true) { }
+    Intersection() : mesh(nullptr), sbox(nullptr), m_emitter(nullptr), m_bsdf(nullptr), is_surface(true), new_media(nullptr) { }
 
     /// Transform a direction vector into the local shading frame
     Vector3f toLocal(const Vector3f &d) const {

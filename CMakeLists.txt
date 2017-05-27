@@ -65,6 +65,8 @@ add_executable(nori
   include/nori/hierarchical.h
   include/nori/scenebox.h
   include/nori/intersection.h
+  include/nori/volumemedia.h
+  include/nori/volumesurface.h
 
   # Source code files
   src/bitmap.cpp
@@ -100,8 +102,11 @@ add_executable(nori
   src/imagebasedsphere.cpp
   src/hierarchical.cpp
   src/intersection.cpp
-  src/volumnhg.cpp
+  src/volumehg.cpp
   src/loop.cpp
+  src/volumesurface.cpp
+  src/volumemediahomo.cpp
+  src/volumemediavacuum.cpp
 )
 
 add_definitions(${NANOGUI_EXTRA_DEFS})
@@ -121,7 +126,7 @@ add_executable(warptest
   src/roughdielectric.cpp
   src/independent.cpp
   src/hierarchical.cpp
-  src/volumnhg.cpp
+  src/volumehg.cpp
 )
 
 target_link_libraries(nori tbb_static pugixml IlmImf nanogui ${NANOGUI_EXTRA_LIBS})

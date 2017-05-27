@@ -30,6 +30,8 @@ Mesh::Mesh() { }
 Mesh::~Mesh() {
     delete m_bsdf;
     delete m_emitter;
+    if (m_volumesurface)
+        delete m_volumesurface;
 }
 
 void Mesh::activate() {
@@ -121,6 +123,14 @@ void Mesh::addChild(NoriObject *obj) {
                 m_emitter = emitter;
             }
             break;
+
+        case EVolumeSurface: {
+            if (m_volumesurface)
+                    throw NoriException(
+                        "Mesh: tried to register multiple volume surface!");
+            m_volumesurface = static_cast<VolumeSurface *>(obj);
+            break;
+        }
 
         default:
             throw NoriException("Mesh::addChild(<%s>) is not supported!",

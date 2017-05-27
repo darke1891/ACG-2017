@@ -22,6 +22,7 @@
 #include <nori/frame.h>
 #include <nori/bbox.h>
 #include <nori/intersection.h>
+#include <nori/volumesurface.h>
 
 NORI_NAMESPACE_BEGIN
 
@@ -133,6 +134,10 @@ public:
      * */
     EClassType getClassType() const { return EMesh; }
 
+    VolumeSurface* getNCVolumeSurface() const {return m_volumesurface;}
+
+    const VolumeSurface* getVolumeSurface() const {return m_volumesurface;}
+
 protected:
     /// Create an empty mesh
     Mesh();
@@ -145,6 +150,7 @@ protected:
     MatrixXu      m_F;                   ///< Faces
     BSDF         *m_bsdf = nullptr;      ///< BSDF of the surface
     Emitter    *m_emitter = nullptr;     ///< Associated emitter, if any
+    VolumeSurface *m_volumesurface = nullptr;
     BoundingBox3f m_bbox;                ///< Bounding box of the mesh
 };
 

@@ -26,12 +26,12 @@
 
 NORI_NAMESPACE_BEGIN
 
-Scene::Scene(const PropertyList &) {
+Scene::Scene(const PropertyList &props) {
     m_accel = new Accel();
 
-    PropertyList m_list;
-    m_bsdf = (BSDF *)(NoriObjectFactory::createInstance("volumnHG", m_list));
-    theta_t = 1.0f;
+    volumeMedia.clear();
+    m_vacuummedia = (VolumeMedia *)(NoriObjectFactory::createInstance("volumemediavacuum", props));
+    volumeMedia.insert(std::pair<std::string, const VolumeMedia*>("", m_vacuummedia));
 }
 
 Scene::~Scene() {
@@ -39,6 +39,9 @@ Scene::~Scene() {
     delete m_sampler;
     delete m_camera;
     delete m_integrator;
+    for (auto it = volumeMedia.begin(); it != volumeMedia.end(); ++it)
+        delete (it->second);
+    volumeMedia.clear();
 }
 
 void Scene::activate() {
@@ -53,6 +56,12 @@ void Scene::activate() {
         /* Create a default (independent) sampler */
         m_sampler = static_cast<Sampler*>(
             NoriObjectFactory::createInstance("independent", PropertyList()));
+    }
+
+    for (auto t_mesh: m_meshes) {
+        VolumeSurface *t_volumesurface = t_mesh->getNCVolumeSurface();
+        if (t_volumesurface)
+            t_volumesurface->activate(volumeMedia);
     }
 
     cout << endl;
@@ -93,6 +102,17 @@ void Scene::addChild(NoriObject *obj) {
                 throw NoriException("There can only be one camera per scene!");
             m_camera = static_cast<Camera *>(obj);
             break;
+
+        case EVolumeMedia: {
+            VolumeMedia* vMedia = static_cast<VolumeMedia *>(obj);
+            std::string t_name = vMedia->getName();
+            if (volumeMedia.find(t_name) == volumeMedia.end()) {
+                volumeMedia.insert(std::pair<std::string, const VolumeMedia*>(t_name, vMedia));
+            }
+            else
+                throw NoriException("Repeated name of volume media!");
+            break;
+        }
         
         case EIntegrator:
             if (m_integrator)
@@ -106,8 +126,46 @@ void Scene::addChild(NoriObject *obj) {
     }
 }
 
-bool Scene::rayIntersect(const Ray3f &ray, Intersection &its, Sampler *sampler) const {
-    bool res_hit = m_accel->rayIntersect(ray, its, false);
+bool Scene::rayIntersect(const Ray3f &ray, Intersection &its, Sampler *sampler, const VolumeMedia* vMedia) const {
+    float dis_total = 0.0f;
+    Ray3f m_ray(ray);
+
+    if (vMedia == nullptr)
+        vMedia = m_vacuummedia;
+
+    bool res_hit = false;
+
+    while (true) {
+        res_hit = m_accel->rayIntersect(m_ray, its, false);
+        its.new_media = vMedia;
+        float dis = vMedia->sample_dis(sampler);
+        if (((res_hit) && (dis < its.t)) || ((!res_hit) && (dis < m_ray.maxt))) {
+            res_hit = true;
+            its = Intersection();
+            its.t = dis;
+            its.p = ray.o + dis * ray.d;
+            its.shFrame = Frame((-ray.d).normalized());
+            its.geoFrame = its.shFrame;
+            its.m_bsdf = vMedia->getBSDF(its.p);
+            its.new_media = vMedia;
+            its.is_surface = false;
+            break;
+        }
+        if ((res_hit) && (its.mesh)) {
+            const VolumeSurface* vSurface = its.mesh->getVolumeSurface();
+            if (vSurface) {
+                dis_total += its.t;
+                m_ray.maxt -= its.t;
+                m_ray.o += m_ray.d * its.t;
+                vMedia = vSurface->nextMedia(its.shFrame.toLocal(- ray.d));
+            }
+            else
+                break;
+        }
+        else
+            break;
+    }
+    its.t += dis_total;
     if (m_box) {
         Intersection its_box;
         bool box_hit = m_box->rayIntersect(ray, its_box);
@@ -115,29 +173,16 @@ bool Scene::rayIntersect(const Ray3f &ray, Intersection &its, Sampler *sampler) 
             if ((!res_hit) || (its_box.t < its.t)) {
                 res_hit = box_hit;
                 its = its_box;
+                its.new_media = m_vacuummedia;
             }
-        }
-    }
-    if ((m_bsdf) && (theta_t > 0.0f)) {
-        float dis = sampler->next1D();
-        dis = -(log(dis) / theta_t);
-        if ((res_hit) && ((dis < its.t) && (dis < ray.maxt))) {
-            res_hit = true;
-            its = Intersection();
-            its.t = dis;
-            its.p = ray.o + dis * ray.d;
-            its.shFrame = Frame((- ray.d).normalized());
-            its.geoFrame = its.shFrame;
-            its.m_bsdf = m_bsdf;
-            its.is_surface = false;
         }
     }
     return res_hit;
 }
 
-bool Scene::rayIntersect(const Ray3f &ray, Sampler *sampler) const {
+bool Scene::rayIntersect(const Ray3f &ray, Sampler *sampler, const VolumeMedia* vMedia) const {
     Intersection its;
-    return rayIntersect(ray, its, sampler);
+    return rayIntersect(ray, its, sampler, vMedia);
 }
 
 const BoundingBox3f &Scene::getBoundingBox() const {

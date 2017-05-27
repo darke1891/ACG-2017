@@ -18,8 +18,10 @@
 
 #pragma once
 
+#include <map>
 #include <nori/accel.h>
 #include <nori/scenebox.h>
+#include <nori/volumemedia.h>
 
 NORI_NAMESPACE_BEGIN
 
@@ -73,7 +75,7 @@ public:
      *
      * \return \c true if an intersection was found
      */
-    bool rayIntersect(const Ray3f &ray, Intersection &its, Sampler *sampler = nullptr) const;
+    bool rayIntersect(const Ray3f &ray, Intersection &its, Sampler *sampler = nullptr, const VolumeMedia* vMedia = nullptr) const;
 
     /**
      * \brief Intersect a ray against all triangles stored in the scene
@@ -90,7 +92,7 @@ public:
      *
      * \return \c true if an intersection was found
      */
-    bool rayIntersect(const Ray3f &ray, Sampler *sampler = nullptr) const;
+    bool rayIntersect(const Ray3f &ray, Sampler *sampler = nullptr, const VolumeMedia* vMedia = nullptr) const;
 
     /// \brief Return an axis-aligned box that bounds the scene
     const BoundingBox3f &getBoundingBox() const;
@@ -119,8 +121,8 @@ private:
     Camera *m_camera = nullptr;
     Accel *m_accel = nullptr;
     SceneBox *m_box = nullptr;
-    BSDF *m_bsdf = nullptr;
-    float theta_t;
+    std::map<std::string, const VolumeMedia*> volumeMedia;
+    VolumeMedia* m_vacuummedia = nullptr;
 };
 
 NORI_NAMESPACE_END

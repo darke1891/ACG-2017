@@ -34,7 +34,7 @@ const Emitter *Intersection::getEmitter() const {
 const BSDF *Intersection::getBSDF() const {
     if (mesh)
         return mesh->getBSDF();
-    else if (sbox)
+    if (sbox)
         return sbox->getBSDF();
     else
         return m_bsdf;

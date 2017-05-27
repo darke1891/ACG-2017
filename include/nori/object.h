@@ -37,6 +37,8 @@ public:
         EPhaseFunction,
         EEmitter,
         ESceneBox,
+        EVolumeMedia,
+        EVolumeSurface,
         EMedium,
         ECamera,
         EIntegrator,
@@ -91,16 +93,18 @@ public:
     /// Turn a class type into a human-readable string
     static std::string classTypeName(EClassType type) {
         switch (type) {
-            case EScene:      return "scene";
-            case EMesh:       return "mesh";
-            case EBSDF:       return "bsdf";
-            case EEmitter:    return "emitter";
-            case ESceneBox:   return "scenebox";
-            case ECamera:     return "camera";
-            case EIntegrator: return "integrator";
-            case ESampler:    return "sampler";
-            case ETest:       return "test";
-            default:          return "<unknown>";
+            case EScene:            return "scene";
+            case EMesh:             return "mesh";
+            case EBSDF:             return "bsdf";
+            case EEmitter:          return "emitter";
+            case ESceneBox:         return "scenebox";
+            case EVolumeMedia:      return "volumemedia";
+            case EVolumeSurface:    return "volumesurface";
+            case ECamera:           return "camera";
+            case EIntegrator:       return "integrator";
+            case ESampler:          return "sampler";
+            case ETest:             return "test";
+            default:                return "<unknown>";
         }
     }
 };

@@ -22,12 +22,12 @@
 
 NORI_NAMESPACE_BEGIN
 
-class VolumnHG : public BSDF {
+class VolumeHG : public BSDF {
 public:
-    VolumnHG(const PropertyList &propList) {
+    VolumeHG(const PropertyList &propList) {
         m_g = propList.getFloat("g", 0.0f);
         m_color = propList.getColor("color", Color3f(1.0f));
-        m_a = propList.getFloat("albedo", 0.9f);
+        m_a = propList.getFloat("albedo", 1.0f);
         float almost_one = 0.9999f;
         m_g = (m_g > almost_one)? almost_one : m_g;
         m_g = (m_g < -almost_one)? -almost_one : m_g;
@@ -42,23 +42,26 @@ public:
     }
 
     Color3f eval(const BSDFQueryRecord &bRec) const {
-        if (bRec.measure != ESolidAngle
-            || Frame::cosTheta(bRec.wi) != 1.0f)
+        if (bRec.measure != ESolidAngle)
             return Color3f(0.0f);
+        if (Frame::cosTheta(bRec.wi) < 1.0f - Epsilon)
+            cout << bRec.wi << endl << "------------" << endl;
 
-        return Color3f(1.0f) * HG_pdf(bRec) * m_a * m_color;
+        return m_color * HG_pdf(bRec) * m_a;
     }
 
     float pdf(const BSDFQueryRecord &bRec) const {
-        if (bRec.measure != ESolidAngle
-            || Frame::cosTheta(bRec.wi) != 1.0f)
+        if (bRec.measure != ESolidAngle)
             return 0.0f;
+        if (Frame::cosTheta(bRec.wi) < 1.0f - Epsilon)
+            cout << bRec.wi << endl << "------------" << endl;
+
         return HG_pdf(bRec);
     }
 
     Color3f sample(BSDFQueryRecord &bRec, const Point2f &sample) const {
-        if (Frame::cosTheta(bRec.wi) != 1.0f)
-            return Color3f(0.0f);
+        if (Frame::cosTheta(bRec.wi) < 1.0f - Epsilon)
+            cout << bRec.wi << endl << "------------" << endl;
 
         bRec.measure = ESolidAngle;
 
@@ -93,7 +96,7 @@ public:
 
     std::string toString() const {
         return tfm::format(
-            "VolumnHG[\n"
+            "VolumeHG[\n"
             " g = %f\n"
             "]",
             m_g
@@ -105,5 +108,5 @@ private:
     float m_a;
 };
 
-NORI_REGISTER_CLASS(VolumnHG, "volumnHG");
+NORI_REGISTER_CLASS(VolumeHG, "volumeHG");
 NORI_NAMESPACE_END
