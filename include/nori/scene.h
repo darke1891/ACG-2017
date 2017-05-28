@@ -75,7 +75,7 @@ public:
      *
      * \return \c true if an intersection was found
      */
-    bool rayIntersect(const Ray3f &ray, Intersection &its, Sampler *sampler = nullptr, const VolumeMedia* vMedia = nullptr) const;
+    bool rayIntersect(const Ray3f &ray, Intersection &its, Sampler *sampler = nullptr) const;
 
     /**
      * \brief Intersect a ray against all triangles stored in the scene
@@ -92,7 +92,7 @@ public:
      *
      * \return \c true if an intersection was found
      */
-    bool rayIntersect(const Ray3f &ray, Sampler *sampler = nullptr, const VolumeMedia* vMedia = nullptr) const;
+    bool rayIntersect(const Ray3f &ray, Sampler *sampler = nullptr) const;
 
     /// \brief Return an axis-aligned box that bounds the scene
     const BoundingBox3f &getBoundingBox() const;

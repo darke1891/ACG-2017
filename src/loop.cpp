@@ -23,9 +23,9 @@ public:
         Color3f res(0.0f);
         Color3f now_one(1.0f);
         float re_xi = 0.0f;
-        float xi_threshold = 0.95f;
+        float xi_threshold_init = 0.95f;
+        float xi_threshold = xi_threshold_init;
         int jump = 0;
-        const VolumeMedia* m_media = nullptr;
 
         const std::vector<Mesh *> meshs = scene->getMeshes();
         std::vector<const Emitter *> emitters;
@@ -48,15 +48,12 @@ public:
             }
         dpdf.normalize();
 
-        while ((re_xi < xi_threshold) || (jump < 4)) {
+        while (true) {
             Intersection its;
-            if (!scene->rayIntersect(m_ray, its, sampler, m_media))
+            if (!scene->rayIntersect(m_ray, its, sampler))
                 break;
 
-            m_media = its.new_media;
-
-            xi_threshold = std::min(0.95f, now_one.maxValue() * 10.0f);
-            jump++;
+            xi_threshold = std::min(xi_threshold_init, now_one.maxValue() * 10.0f);
 
             const BSDF *bsdf;
             const Emitter *emitter;
@@ -75,13 +72,13 @@ public:
                 }
                 bRec = BSDFQueryRecord(its.shFrame.toLocal(-m_ray.d), sampler);
             }
-            else if (bsdf) {
+            else if ((bsdf) && (bsdf->isDiffuse())) {
                 float emitter_u = sampler->next1D();
                 float emitter_pdf;
                 size_t emitter_id = dpdf.sample(emitter_u, emitter_pdf);
                 emitter = emitters[emitter_id];
 
-                Point2f sample = sampler->next2D();
+                Point2f sample = sampler->next2D(2);
                 EmitterSample emitter_sample = emitter->sample(sample);
                 Vector3f d = emitter_sample.point - its.p;
                 Vector3f d_norm;
@@ -96,7 +93,7 @@ public:
 
                 bool zero_light = false;
 
-                if (scene->rayIntersect(newRay, sampler, m_media))
+                if (scene->rayIntersect(newRay, sampler))
                     zero_light = true;
 
                 if (emitter_sample.normal.dot(d_norm) >= 0.0f)
@@ -104,12 +101,19 @@ public:
                 else
                     g_weight *= fabs(emitter_sample.normal.dot(d_norm)) / (dis * dis);
 
-                if (its.is_surface)
+                if (its.is_surface){
                     g_weight *= fabs(its.shFrame.n.dot(d_norm));
+                }
+                else
+                    if (dis < 0.0f) {
+                        cout << dis << endl;
+                        cout << emitter_sample.point << endl;
+                        cout << its.p << endl;
+                        cout << "---------" << endl;
+                    }
 
                 bRec = BSDFQueryRecord(its.shFrame.toLocal(-m_ray.d), its.shFrame.toLocal(d_norm), ESolidAngle, sampler);
                 if (!zero_light) {
-                    
                     Color3f d_color = bsdf->eval(bRec);
                     d_color *= g_weight;
                     d_color *= emitter_sample.radiance;
@@ -121,11 +125,13 @@ public:
             re_xi = sampler->next1D();
             if ((re_xi < xi_threshold) || (jump < 4)) {
                 if (bsdf) {
-                    Point2f re_sample = sampler->next2D();
+                    Point2f re_sample = sampler->next2D(3 + jump);
                     Color3f re_color = bsdf->sample(bRec, re_sample);
-                    if (re_color.maxValue() != 0.0f) {
+                    if (re_color.maxValue() > Epsilon) {
                         m_ray = Ray3f(its.p, its.shFrame.toWorld(bRec.wo));
                         is_diffuse = bsdf->isDiffuse();
+                        if (is_diffuse)
+                            jump++;
                         now_one *= re_color / xi_threshold;
                     }
                     else
@@ -137,6 +143,8 @@ public:
                     now_one /= xi_threshold;
                 }
             }
+            else
+                break;
         }
 
         return res;

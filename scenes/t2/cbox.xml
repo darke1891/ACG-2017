@@ -14,8 +14,8 @@
 		<integer name="width" value="800"/>
 	</camera>
 	
-	<sampler type="independent">
-		<integer name="sampleCount" value="128"/>
+	<sampler type="halton">
+		<integer name="sampleCount" value="2048"/>
 	</sampler>
 
 	<mesh type="obj">
@@ -68,8 +68,15 @@
 
 	<volumemedia type="volumemediahomo">
 		<string name="name" value="fog"/>
-		<float name="albedo" value="0.9"/>
+		<float name="albedo" value="0.1"/>
 		<float name="theta_t" value="5.0"/>
 	</volumemedia>
+
+	<scenebox type="image-based-sphere">
+		<point name="center" value="0, 0, 0"/>
+		<float name="radius" value="5.0"/>
+		<string name="light-image" value="meshes/glacier-small.exr"/>
+		<float name="scale" value="0.5"/>
+	</scenebox>
 
 </scene>

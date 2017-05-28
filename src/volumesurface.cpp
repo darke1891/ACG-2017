@@ -37,7 +37,7 @@ void VolumeSurface::activate(std::map<std::string, const VolumeMedia*> &volumeMe
     m_extMedia = its->second;
 }
 
-const VolumeMedia *VolumeSurface::nextMedia(Vector3f wi) const {
+const VolumeMedia *VolumeSurface::dirMedia(Vector3f wi) const {
     if (Frame::cosTheta(wi) <= 0.0f)
         return m_extMedia;
     else

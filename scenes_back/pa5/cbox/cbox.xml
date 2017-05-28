@@ -14,7 +14,7 @@
 		<integer name="width" value="800"/>
 	</camera>
 	
-	<sampler type="independent">
+	<sampler type="halton">
 		<integer name="sampleCount" value="512"/>
 	</sampler>
 

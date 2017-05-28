@@ -15,7 +15,7 @@ public:
     PathSimpleIntegrator(const PropertyList &props) {
     }
 
-    Color3f Li(const Scene *scene, Sampler *sampler, const Ray3f &ray, bool is_diffuse) const {
+    Color3f Li(const Scene *scene, Sampler *sampler, const Ray3f &ray, bool is_diffuse, int depth) const {
         Intersection its;
         if (!scene->rayIntersect(ray, its))
             return Color3f(0.0f);
@@ -66,7 +66,7 @@ public:
             size_t emitter_id = dpdf.sample(emitter_u, emitter_pdf);
             emitter = emitters[emitter_id];
 
-            Point2f sample = sampler->next2D();
+            Point2f sample = sampler->next2D(2);
             EmitterSample emitter_sample = emitter->sample(sample);
             Vector3f d = emitter_sample.point - its.p;
             Vector3f d_norm;
@@ -96,11 +96,16 @@ public:
         float re_xi = sampler->next1D();
         float xi_threshold = 0.95f;
         if (re_xi < xi_threshold) {
-            Point2f re_sample = sampler->next2D();
+            Point2f re_sample;
+            if (depth == 0)
+                re_sample = sampler->next2D(3);
+            else
+                re_sample = sampler->next2D(3 + depth);
+
             Color3f re_color = bsdf->sample(bRec, re_sample);
             if ((re_color.r() != 0.0f) || (re_color.g() != 0.0f) || (re_color.b() != 0.0f)) {
                 Ray3f new_ray(its.p, its.shFrame.toWorld(bRec.wo));
-                Color3f re_Lix = Li(scene, sampler, new_ray, bsdf->isDiffuse());
+                Color3f re_Lix = Li(scene, sampler, new_ray, bsdf->isDiffuse(), depth + 1);
                 res += re_Lix * re_color / xi_threshold;
             }
         }
@@ -109,7 +114,7 @@ public:
     }
 
     Color3f Li(const Scene *scene, Sampler *sampler, const Ray3f &ray) const {
-        return Li(scene, sampler, ray, false);
+        return Li(scene, sampler, ray, false, 0);
     }
 
     std::string toString() const {

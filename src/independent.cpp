@@ -66,6 +66,10 @@ public:
         );
     }
 
+    Point2f next2D(int index) {
+        return next2D();
+    }
+
     std::string toString() const {
         return tfm::format("Independent[sampleCount=%i]", m_sampleCount);
     }

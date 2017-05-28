@@ -68,7 +68,8 @@ public:
     enum PointType {
         Independent = 0,
         Grid,
-        Stratified
+        Stratified,
+        Halton
     };
 
     enum WarpType {
@@ -148,13 +149,30 @@ public:
         positions.resize(3, pointCount);
         weights.resize(1, pointCount);
 
+        Sampler* t_sampler = nullptr;
+        PropertyList propList;
+        switch(pointType) {
+            case Independent:
+                t_sampler = static_cast<Sampler *>(NoriObjectFactory::createInstance("independent", propList));
+                break;
+            case Halton:
+                t_sampler = static_cast<Sampler *>(NoriObjectFactory::createInstance("halton", propList));
+                break;
+            default:
+                break;
+        }
+
         for (int i=0; i<pointCount; ++i) {
             int y = i / sqrtVal, x = i % sqrtVal;
             Point2f sample;
 
             switch (pointType) {
                 case Independent:
-                    sample = Point2f(rng.nextFloat(), rng.nextFloat());
+                    sample = t_sampler->next2D();
+                    break;
+
+                case Halton:
+                    sample = t_sampler->next2D(0);
                     break;
 
                 case Grid:
@@ -171,6 +189,9 @@ public:
             positions.col(i) = result.first;
             weights(0, i) = result.second;
         }
+
+        if (t_sampler)
+            delete t_sampler;
     }
 
     void refresh() {
@@ -455,6 +476,7 @@ public:
     }
 
     void runTest() {
+        PointType pointType = (PointType) m_pointTypeBox->selectedIndex();
         int xres = 51, yres = 51;
         WarpType warpType = (WarpType) m_warpTypeBox->selectedIndex();
         float parameterValue = mapParameter(warpType, m_parameterSlider->value());
@@ -469,7 +491,7 @@ public:
         memset(expFrequencies.get(), 0, res*sizeof(double));
 
         MatrixXf points, values;
-        generatePoints(sampleCount, Independent, warpType,
+        generatePoints(sampleCount, pointType, warpType,
                        parameterValue, points, values);
 
         for (int i=0; i<sampleCount; ++i) {
@@ -627,7 +649,7 @@ public:
         m_pointCountBox = new TextBox(panel);
         m_pointCountBox->setFixedSize(Vector2i(80, 25));
 
-        m_pointTypeBox = new ComboBox(m_window, { "Independent", "Grid", "Stratified" });
+        m_pointTypeBox = new ComboBox(m_window, { "Independent", "Grid", "Stratified", "Halton" });
         m_pointTypeBox->setCallback([&](int) { refresh(); });
 
         new Label(m_window, "Warping method", "sans-bold");

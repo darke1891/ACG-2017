@@ -31,7 +31,7 @@ public:
     EClassType getClassType() const { return EVolumeSurface; }
     std::string toString() const;
     void activate(std::map<std::string, const VolumeMedia*> &volumeMedia);
-    const VolumeMedia *nextMedia(Vector3f wi) const;
+    const VolumeMedia *dirMedia(Vector3f wi) const;
 
 private:
     std::string m_intMediaName, m_extMediaName;

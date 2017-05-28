@@ -94,6 +94,8 @@ public:
     /// Retrieve the next two component values from the current sample
     virtual Point2f next2D() = 0;
 
+    virtual Point2f next2D(int index) = 0;
+
     /// Return the number of configured pixel samples
     virtual size_t getSampleCount() const { return m_sampleCount; }
 

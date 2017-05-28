@@ -48,9 +48,10 @@ static void renderBlock(const Scene *scene, Sampler *sampler, ImageBlock &block)
     /* For each pixel and pixel sample sample */
     for (int y=0; y<size.y(); ++y) {
         for (int x=0; x<size.x(); ++x) {
+            sampler->generate();
             for (uint32_t i=0; i<sampler->getSampleCount(); ++i) {
-                Point2f pixelSample = Point2f((float) (x + offset.x()), (float) (y + offset.y())) + sampler->next2D();
-                Point2f apertureSample = sampler->next2D();
+                Point2f pixelSample = Point2f((float) (x + offset.x()), (float) (y + offset.y())) + sampler->next2D(0);
+                Point2f apertureSample = sampler->next2D(1);
 
                 /* Sample a ray from the camera */
                 Ray3f ray;
@@ -91,6 +92,11 @@ static void render(Scene *scene, const std::string &filename) {
         Timer timer;
 
         tbb::blocked_range<int> range(0, blockGenerator.getBlockCount());
+        // ImageBlock block2(Vector2i(NORI_BLOCK_SIZE),
+        //     camera->getReconstructionFilter());
+        // for (int i=0; i<103; i++)
+        //     blockGenerator.next(block2);
+        // tbb::blocked_range<int> range(0, 10);
 
         auto map = [&](const tbb::blocked_range<int> &range) {
             /* Allocate memory for a small image block to be rendered
@@ -102,6 +108,9 @@ static void render(Scene *scene, const std::string &filename) {
             std::unique_ptr<Sampler> sampler(scene->getSampler()->clone());
 
             for (int i=range.begin(); i<range.end(); ++i) {
+                #if NORI_SCREEN == 0
+                    cout << i << endl;
+                #endif
                 /* Request an image block from the block generator */
                 blockGenerator.next(block);
 
@@ -115,10 +124,6 @@ static void render(Scene *scene, const std::string &filename) {
                    the "big" block that represents the entire image */
                 result.put(block);
             }
-
-            #if NORI_SCREEN == 0
-                cout << block.getOffset().x() << ' ' << block.getOffset().y() << endl;
-            #endif
         };
 
         #if NORI_PARALLEL == 0

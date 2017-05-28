@@ -107,6 +107,7 @@ add_executable(nori
   src/volumesurface.cpp
   src/volumemediahomo.cpp
   src/volumemediavacuum.cpp
+  src/halton.cpp
 )
 
 add_definitions(${NANOGUI_EXTRA_DEFS})
@@ -116,6 +117,7 @@ add_executable(warptest
   include/nori/warp.h
   include/nori/bitmap.h
   include/nori/hierarchical.h
+  include/nori/sampler.h
   src/warp.cpp
   src/warptest.cpp
   src/microfacet.cpp
@@ -127,6 +129,7 @@ add_executable(warptest
   src/independent.cpp
   src/hierarchical.cpp
   src/volumehg.cpp
+  src/halton.cpp
 )
 
 target_link_libraries(nori tbb_static pugixml IlmImf nanogui ${NANOGUI_EXTRA_LIBS})
