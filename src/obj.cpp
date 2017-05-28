@@ -169,6 +169,7 @@ protected:
             return hash;
         }
     };
+
 };
 
 NORI_REGISTER_CLASS(WavefrontOBJ, "obj");

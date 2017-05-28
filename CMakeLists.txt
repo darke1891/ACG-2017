@@ -108,6 +108,7 @@ add_executable(nori
   src/volumemediahomo.cpp
   src/volumemediavacuum.cpp
   src/halton.cpp
+  src/bidiffuse.cpp
 )
 
 add_definitions(${NANOGUI_EXTRA_DEFS})
