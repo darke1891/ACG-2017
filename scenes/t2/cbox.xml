@@ -1,7 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
 
 <scene>
-	<integrator type="loop"/>
+	<integrator type="loop">
+		<integer name="shadow sample" value="8"/>
+	</integrator>
 
 	<camera type="perspective">
 		<float name="fov" value="40"/>
@@ -15,7 +17,7 @@
 	</camera>
 	
 	<sampler type="halton">
-		<integer name="sampleCount" value="32"/>
+		<integer name="sampleCount" value="1024"/>
 	</sampler>
 
 	<mesh type="obj">

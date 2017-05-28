@@ -181,8 +181,8 @@ public:
     Point2f next2D(int index) {
         if (index < seed_num) {
             uint32_t this_seed = seeds[index];
+            seeds[index] += 1;
             switch(seed_states[index]) {
-
                 case 0:
                     seed_states[index] = 1;
                     return Point2f(
@@ -195,7 +195,7 @@ public:
                     seeds[index] += 1;
                     return Point2f(
                         convert5(this_seed) * scale + Epsilon,
-                        convert7(this_seed + 1) * scale + Epsilon
+                        convert7(this_seed) * scale + Epsilon
                         );
             }
         }

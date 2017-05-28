@@ -14,6 +14,7 @@ NORI_NAMESPACE_BEGIN
 class PathLoopIntegrator : public Integrator {
 public:
     PathLoopIntegrator(const PropertyList &props) {
+        shadow_sample = props.getInteger("shadow sample", 1);
     }
 
     Color3f Li(const Scene *scene, Sampler *sampler, const Ray3f &ray) const {
@@ -26,6 +27,10 @@ public:
         float xi_threshold_init = 0.95f;
         float xi_threshold = xi_threshold_init;
         int jump = 0;
+        float shadow_inv = 1.0f / shadow_sample;
+        float p_bsdf, p_light;
+        float short_dis = 0.01f;
+        p_bsdf = 0.0f;
 
         const std::vector<Mesh *> meshs = scene->getMeshes();
         std::vector<const Emitter *> emitters;
@@ -46,7 +51,7 @@ public:
                 dpdf.append(1.0f);
                 emitters.push_back(sbox->getEmitter());
             }
-        dpdf.normalize();
+        float light_sum = dpdf.normalize();
 
         while (true) {
             Intersection its;
@@ -61,63 +66,84 @@ public:
             emitter = its.getEmitter();
             BSDFQueryRecord bRec(Vector3f(0.0f, 0.0f, 0.0f), sampler);
 
-            if (!is_diffuse) {
-                if (emitter != nullptr) {
-                    Color3f direct_res = emitter->hit(its.p);
-                    Vector3f d_direct = -m_ray.d;
-                    d_direct = its.shFrame.toLocal(d_direct);
-                    if (d_direct.z() <= 0.0f)
-                        direct_res *= 0.0f;
-                    res += direct_res * now_one;
-                }
-                bRec = BSDFQueryRecord(its.shFrame.toLocal(-m_ray.d), sampler);
-            }
-            else if ((bsdf) && (bsdf->isDiffuse())) {
-                float emitter_u = sampler->next1D();
-                float emitter_pdf;
-                size_t emitter_id = dpdf.sample(emitter_u, emitter_pdf);
-                emitter = emitters[emitter_id];
-
-                Point2f sample = sampler->next2D(2);
-                EmitterSample emitter_sample = emitter->sample(sample);
-                Vector3f d = emitter_sample.point - its.p;
-                Vector3f d_norm;
-                float dis = d.norm();
-                float short_dis = 0.01f;
-                if (dis < short_dis)
-                    dis = short_dis;
-                d_norm = d;
-                d_norm.normalize();
-                Ray3f newRay(its.p, d_norm, Epsilon, dis - Epsilon);
-                float g_weight = 1.0f / emitter_sample.probability_density;
-
-                bool zero_light = false;
-
-                if (scene->rayIntersect(newRay, sampler))
-                    zero_light = true;
-
-                if (emitter_sample.normal.dot(d_norm) >= 0.0f)
-                    zero_light = true;
-                else
-                    g_weight *= fabs(emitter_sample.normal.dot(d_norm)) / (dis * dis);
-
+            if (emitter != nullptr) {
+                Color3f direct_res = emitter->hit(its.p);
+                Vector3f d_vector = -m_ray.d;
+                float d_direct;
                 if (its.is_surface){
-                    g_weight *= fabs(its.shFrame.n.dot(d_norm));
+                    d_vector = its.shFrame.toLocal(d_vector);
+                    d_direct = d_vector.z();
                 }
                 else
-                    if (dis < 0.0f) {
-                        cout << dis << endl;
-                        cout << emitter_sample.point << endl;
-                        cout << its.p << endl;
-                        cout << "---------" << endl;
+                    d_direct = 1.0f;
+
+                if (d_direct <= 0.0f)
+                    direct_res *= 0.0f;
+                else if (is_diffuse) {
+                    p_light = emitter->get_pdf(its.p);
+                    p_light /= light_sum;
+                    p_light /= d_direct;
+                    float dis = its.t;
+                    p_light *= dis * dis;
+                    if (p_light + p_bsdf > 0.0f)
+                        direct_res *= p_bsdf / (p_bsdf + p_light);
+                }
+                res += direct_res * now_one;
+            }
+
+            if ((bsdf) && (bsdf->isDiffuse())) {
+                for (int i=0; i<shadow_sample; i++) {
+                    float emitter_u = sampler->next1D();
+                    float emitter_pdf;
+                    size_t emitter_id = dpdf.sample(emitter_u, emitter_pdf);
+                    emitter = emitters[emitter_id];
+
+                    Point2f sample = sampler->next2D(2);
+                    EmitterSample emitter_sample = emitter->sample(sample);
+                    Vector3f d = emitter_sample.point - its.p;
+                    Vector3f d_norm;
+                    float dis = d.norm();
+                    d_norm = d;
+                    d_norm.normalize();
+                    Ray3f newRay(its.p, d_norm, Epsilon, dis - Epsilon);
+                    float g_weight = 1.0f / emitter_sample.probability_density;
+
+                    if (scene->rayIntersect(newRay, sampler))
+                        continue;
+
+                    float d_direct;
+                    if (emitter_sample.is_surface)
+                        d_direct = -(emitter_sample.normal.dot(d_norm));
+                    else
+                        d_direct = 1.0f;
+
+                    if (d_direct < Epsilon)
+                        continue;
+                    else
+                        g_weight *= d_direct;
+
+                    if (dis < short_dis)
+                        g_weight /= (short_dis * short_dis);
+                    else
+                        g_weight /= (dis * dis);
+
+                    if (its.is_surface){
+                        g_weight *= fabs(its.shFrame.n.dot(d_norm));
                     }
 
-                bRec = BSDFQueryRecord(its.shFrame.toLocal(-m_ray.d), its.shFrame.toLocal(d_norm), ESolidAngle, sampler);
-                if (!zero_light) {
+                    bRec = BSDFQueryRecord(its.shFrame.toLocal(-m_ray.d), its.shFrame.toLocal(d_norm), ESolidAngle, sampler);
                     Color3f d_color = bsdf->eval(bRec);
                     d_color *= g_weight;
                     d_color *= emitter_sample.radiance;
                     d_color /= emitter_pdf;
+
+                    p_light = emitter_sample.probability_density / d_direct;
+                    p_light *= emitter_pdf;
+                    p_light *= dis * dis;
+                    p_bsdf = bsdf->pdf(bRec);
+                    d_color *= p_light / (p_bsdf + p_light);
+
+                    d_color *= shadow_inv;
                     res += d_color * now_one;
                 }
             }
@@ -125,11 +151,13 @@ public:
             re_xi = sampler->next1D();
             if ((re_xi < xi_threshold) || (jump < 4)) {
                 if (bsdf) {
+                    bRec = BSDFQueryRecord(its.shFrame.toLocal(-m_ray.d), sampler);
                     Point2f re_sample = sampler->next2D(3 + jump);
                     Color3f re_color = bsdf->sample(bRec, re_sample);
                     if (re_color.maxValue() > Epsilon) {
                         m_ray = Ray3f(its.p, its.shFrame.toWorld(bRec.wo));
                         is_diffuse = bsdf->isDiffuse();
+                        p_bsdf = bsdf->pdf(bRec);
                         if (is_diffuse)
                             jump++;
                         now_one *= re_color / xi_threshold;
@@ -138,6 +166,7 @@ public:
                         break;
                 }
                 else {
+                    cout << "No BSDF" << endl;
                     m_ray = Ray3f(its.p, its.shFrame.toWorld(- bRec.wi));
                     is_diffuse = false;
                     now_one /= xi_threshold;
@@ -153,6 +182,9 @@ public:
     std::string toString() const {
         return "PathLoopIntegrator[]";
     }
+
+private:
+    int shadow_sample;
 
 };
 

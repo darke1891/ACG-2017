@@ -19,7 +19,6 @@ public:
     virtual EmitterSample sample(Point2f &p) const;
     virtual Color3f hit(Point3f p) const;
     virtual float get_pdf(Point3f p) const;
-    virtual bool for_scene() const;
 private:
     Point3f center;
     float radius;
@@ -126,6 +125,7 @@ EmitterSample ImageBasedSphereEmitter::sample(Point2f &p) const {
     Point2f pick = hSampler->squareToHierarchical(p);
     sample.probability_density = hSampler->squareToHierarchicalPdf(pick);
     sample.probability_density /= radius * radius * M_PI * 4.0f;
+
     sample.normal.y() = pick.y() * 2.0f - 1.0f;
     float xz = sqrt(1.0f - sample.normal.y() * sample.normal.y());
     sample.normal.x() = - cos(pick.x() * 2.0f * M_PI) * xz;
@@ -135,6 +135,7 @@ EmitterSample ImageBasedSphereEmitter::sample(Point2f &p) const {
 
     sample.point = center - sample.normal * radius;
     sample.radiance = hSampler->hit(pick) * scale;
+    sample.is_surface = true;
     return sample;
 }
 
@@ -166,10 +167,6 @@ float ImageBasedSphereEmitter::get_pdf(Point3f p) const {
     float res = hSampler->squareToHierarchicalPdf(p2);
     res /= radius * radius * M_PI * 4.0f;
     return res;
-}
-
-bool ImageBasedSphereEmitter::for_scene() const {
-    return true;
 }
 
 NORI_REGISTER_CLASS(ImageBasedSphere, "image-based-sphere");

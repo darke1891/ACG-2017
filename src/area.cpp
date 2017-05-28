@@ -72,6 +72,7 @@ EmitterSample AreaLight::sample(Point2f &p) const {
     res.point = point;
     res.normal = normal;
     res.radiance = radiance;
+    res.is_surface = true;
     return res;
 }
 
