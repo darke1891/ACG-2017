@@ -26,7 +26,7 @@ class Halton : public Sampler {
 public:
     Halton(const PropertyList &propList) {
         m_sampleCount = (size_t) propList.getInteger("sampleCount", 1);
-        seed_num = 6;
+        seed_num = 4;
         scale = 1.0f - 2 * Epsilon;
         array_init();
     }
@@ -41,8 +41,13 @@ public:
         seeds = new uint32_t[seed_num];
         for (int i=0; i<seed_num; i++)
             seeds[i] = m_random.nextUInt();
+        seed_states = new uint32_t[seed_num];
+        for (int i=0; i<seed_num; i++)
+            seed_states[i] = 0;
+
         ran_3 = new uint32_t[3];
         ran_5 = new uint32_t[5];
+        ran_7 = new uint32_t[7];
         ran_3[0] = 1;
         ran_3[1] = 2;
         ran_3[2] = 0;
@@ -52,6 +57,14 @@ public:
         ran_5[2] = 4;
         ran_5[3] = 0;
         ran_5[4] = 2;
+
+        ran_7[0] = 5;
+        ran_7[1] = 6;
+        ran_7[2] = 2;
+        ran_7[3] = 4;
+        ran_7[4] = 1;
+        ran_7[5] = 0;
+        ran_7[6] = 3;
     }
 
     std::unique_ptr<Sampler> clone() const {
@@ -110,11 +123,10 @@ public:
         uint64_t magic_number = 2863311531;
         for (int i=0; i<20; i++) {
             tmpn = (n2 * magic_number) >> 33;
+            while (tmpn * 3 > n2)
+                tmpn--;
             tmpn2 = n2 - tmpn * 3;
-            if (tmpn2 > 2)
-                cout << "error in c3 " << tmpn2 << ' ' << n << endl;
-            else
-                tmpn2 = ran_3[tmpn2];
+            tmpn2 = ran_3[tmpn2];
             result = result * 3 + 2 - tmpn2;
             sbase *= 3;
             n2 = tmpn;
@@ -132,13 +144,33 @@ public:
         uint64_t magic_number = 3435973837;
         for (int i=0; i<14; i++) {
             tmpn = (n2 * magic_number) >> 34;
+            while (tmpn * 5 > n2)
+                tmpn--;
             tmpn2 = n2 - tmpn * 5;
-            if (tmpn2 > 4)
-                cout << "error in c5 " << tmpn2 << ' ' << n << endl;
-            else
-                tmpn2 = ran_5[tmpn2];
+            tmpn2 = ran_5[tmpn2];
             result = result * 5 + tmpn2;
             sbase *= 5;
+            n2 = tmpn;
+        }
+        float res = result;
+        res /= sbase;
+        return res;
+    }
+
+    float convert7(uint32_t n) {
+        uint64_t n2 = n;
+        uint64_t tmpn, tmpn2;
+        uint64_t sbase = 1;
+        uint64_t result = 0;
+        uint64_t magic_number = 2454267027;
+        for (int i=0; i<12; i++) {
+            tmpn = (n2 * magic_number) >> 34;
+            while (tmpn * 7 > n2)
+                tmpn--;
+            tmpn2 = n2 - tmpn * 7;
+            tmpn2 = ran_7[tmpn2];
+            result = result * 7 + tmpn2;
+            sbase *= 7;
             n2 = tmpn;
         }
         float res = result;
@@ -149,11 +181,23 @@ public:
     Point2f next2D(int index) {
         if (index < seed_num) {
             uint32_t this_seed = seeds[index];
-            seeds[index] += 7;
-            return Point2f(
-                convert5(this_seed) * scale + Epsilon,
-                convert3(this_seed) * scale + Epsilon
-            );
+            switch(seed_states[index]) {
+
+                case 0:
+                    seed_states[index] = 1;
+                    return Point2f(
+                        convert2(this_seed) * scale + Epsilon,
+                        convert3(this_seed) * scale + Epsilon
+                    );
+                case 1:
+                default:
+                    seed_states[index] = 0;
+                    seeds[index] += 1;
+                    return Point2f(
+                        convert5(this_seed) * scale + Epsilon,
+                        convert7(this_seed + 1) * scale + Epsilon
+                        );
+            }
         }
         else
             return next2D();
@@ -168,9 +212,10 @@ protected:
 private:
     pcg32 m_random;
     uint32_t* seeds;
+    uint32_t* seed_states;
     int seed_num;
     float scale;
-    uint32_t *ran_3, *ran_5;
+    uint32_t *ran_3, *ran_5, *ran_7;
 };
 
 NORI_REGISTER_CLASS(Halton, "halton");
