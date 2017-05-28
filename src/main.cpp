@@ -30,7 +30,7 @@
 #include <filesystem/resolver.h>
 #include <thread>
 
-#define NORI_SCREEN 0
+#define NORI_SCREEN 1
 #define NORI_PARALLEL 1
 
 using namespace nori;

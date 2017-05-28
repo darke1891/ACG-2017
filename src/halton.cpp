@@ -46,6 +46,7 @@ public:
         ran_3[0] = 1;
         ran_3[1] = 2;
         ran_3[2] = 0;
+        
         ran_5[0] = 1;
         ran_5[1] = 3;
         ran_5[2] = 4;
@@ -107,7 +108,7 @@ public:
         uint64_t sbase = 1;
         uint64_t result = 0;
         uint64_t magic_number = 2863311531;
-        while(n2 > 0) {
+        for (int i=0; i<20; i++) {
             tmpn = (n2 * magic_number) >> 33;
             tmpn2 = n2 - tmpn * 3;
             if (tmpn2 > 2)
@@ -129,7 +130,7 @@ public:
         uint64_t sbase = 1;
         uint64_t result = 0;
         uint64_t magic_number = 3435973837;
-        while(n2 > 0) {
+        for (int i=0; i<14; i++) {
             tmpn = (n2 * magic_number) >> 34;
             tmpn2 = n2 - tmpn * 5;
             if (tmpn2 > 4)
