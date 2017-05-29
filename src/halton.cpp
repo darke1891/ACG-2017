@@ -181,7 +181,6 @@ public:
     Point2f next2D(int index) {
         if (index < seed_num) {
             uint32_t this_seed = seeds[index];
-            seeds[index] += 1;
             switch(seed_states[index]) {
                 case 0:
                     seed_states[index] = 1;

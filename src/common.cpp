@@ -299,4 +299,43 @@ float fresnel(float cosThetaI, float extIOR, float intIOR) {
     return (Rs * Rs + Rp * Rp) / 2.0f;
 }
 
+float interpolation_3d(float*** data, int* index, Point3f sample) {
+    int px, py, pz;
+    float dx, dy, dz;
+    float res;
+    if ((sample.x() < 0.0f) || (sample.x() > 1.0f))
+        return -2.0f;
+    if ((sample.y() < 0.0f) || (sample.y() > 1.0f))
+        return -2.0f;
+    if ((sample.z() < 0.0f) || (sample.z() > 1.0f))
+        return -2.0f;
+    
+    dx = sample.x() * (index[0] - 1);
+    px = dx;
+    px = std::min(std::max(px, 0), index[0] - 2);
+    dx -= px;
+
+    dy = sample.z() * (index[1] - 1);
+    py = dy;
+    py = std::min(std::max(py, 0), index[1] - 2);
+    dy -= py;
+
+    dz = sample.y() * (index[2] - 1);
+    pz = dz;
+    pz = std::min(std::max(pz, 0), index[2] - 2);
+    dz -= pz;
+
+    res = 0.0f;
+    res += data[px + 0][py + 0][pz + 0] * (1.0f - dx) * (1.0f - dy) * (1.0f - dz);
+    res += data[px + 0][py + 0][pz + 1] * (1.0f - dx) * (1.0f - dy) * (dz);
+    res += data[px + 0][py + 1][pz + 0] * (1.0f - dx) * (dy) * (1.0f - dz);
+    res += data[px + 0][py + 1][pz + 1] * (1.0f - dx) * (dy) * (dz);
+    res += data[px + 1][py + 0][pz + 0] * (dx) * (1.0f - dy) * (1.0f - dz);
+    res += data[px + 1][py + 0][pz + 1] * (dx) * (1.0f - dy) * (dz);
+    res += data[px + 1][py + 1][pz + 0] * (dx) * (dy) * (1.0f - dz);
+    res += data[px + 1][py + 1][pz + 1] * (dx) * (dy) * (dz);
+
+    return res;
+}
+
 NORI_NAMESPACE_END

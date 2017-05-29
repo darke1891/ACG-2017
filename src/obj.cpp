@@ -40,6 +40,9 @@ public:
             throw NoriException("Unable to open OBJ file \"%s\"!", filename);
         Transform trafo = propList.getTransform("toWorld", Transform());
 
+        Transform local_transform = propList.getTransform("local", Transform());
+        trafo = trafo * local_transform;
+
         cout << "Loading \"" << filename << "\" .. ";
         cout.flush();
         Timer timer;

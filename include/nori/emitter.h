@@ -48,6 +48,9 @@ public:
     }
 
     virtual EmitterSample sample(Point2f &p) const = 0;
+    virtual EmitterSample sample(Point2f &p, float p2) const {
+        return sample(p);
+    };
     virtual Color3f hit(Point3f p) const = 0;
     virtual float get_pdf(Point3f p) const = 0;
 };

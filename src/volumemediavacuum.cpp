@@ -30,11 +30,15 @@ public:
         return m_name;
     }
 
-    float sample_dis(Sampler* sampler) const {
+    float sample_dis(const Ray3f &ray, float t, Sampler* sampler) const {
         return std::numeric_limits<float>::infinity();
     }
 
-    BSDF* getBSDF(Point3f &p) const {
+    BSDF* getBSDF() const {
+        return nullptr;
+    }
+
+    Emitter* getEmitter() const {
         return nullptr;
     }
 

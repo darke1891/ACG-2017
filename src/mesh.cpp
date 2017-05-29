@@ -28,18 +28,19 @@ NORI_NAMESPACE_BEGIN
 Mesh::Mesh() { }
 
 Mesh::~Mesh() {
-    delete m_bsdf;
+    if (m_bsdf)
+        delete m_bsdf;
     delete m_emitter;
     if (m_volumesurface)
         delete m_volumesurface;
 }
 
 void Mesh::activate() {
-    if (!m_bsdf) {
-        /* If no material was assigned, instantiate a diffuse BRDF */
-        m_bsdf = static_cast<BSDF *>(
-            NoriObjectFactory::createInstance("diffuse", PropertyList()));
-    }
+    // if (!m_bsdf) {
+    //     /* If no material was assigned, instantiate a diffuse BRDF */
+    //     m_bsdf = static_cast<BSDF *>(
+    //         NoriObjectFactory::createInstance("diffuse", PropertyList()));
+    // }
     if (m_emitter != nullptr) {
         m_emitter->emit_activate(this);
     }

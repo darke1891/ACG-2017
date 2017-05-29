@@ -237,6 +237,8 @@ inline int mod(int a, int b) {
     return (r < 0) ? r+b : r;
 }
 
+float interpolation_3d(float*** data, int* index, Point3f sample);
+
 /// Compute a direction for the given coordinates in spherical coordinates
 extern Vector3f sphericalDirection(float theta, float phi);
 

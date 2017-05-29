@@ -138,22 +138,25 @@ bool Scene::rayIntersect(const Ray3f &ray, Intersection &its, Sampler *sampler) 
             const VolumeSurface* vSurface = its.mesh->getVolumeSurface();
             if (vSurface) {
                 const VolumeMedia* vMedia = vSurface->dirMedia(its.shFrame.toLocal(ray.d));
-                float dis = vMedia->sample_dis(sampler);
+                float dis = vMedia->sample_dis(m_ray, its.t, sampler);
                 if (dis < its.t) {
                     its = Intersection();
                     its.t = dis;
                     its.p = m_ray.o + dis * m_ray.d;
                     its.shFrame = Frame((-ray.d).normalized());
                     its.geoFrame = its.shFrame;
-                    its.m_bsdf = vMedia->getBSDF(its.p);
+                    its.m_media = vMedia;
                     its.is_surface = false;
                     break;
                 }
-                
+            }
+            if (its.mesh->getBSDF())
+                break;
+            else if (vSurface) {
                 dis_total += its.t;
                 m_ray.maxt -= its.t;
                 m_ray.o += m_ray.d * its.t;
-                }
+            }
             else
                 break;
         }
@@ -181,6 +184,17 @@ bool Scene::rayIntersect(const Ray3f &ray, Sampler *sampler) const {
 
 const BoundingBox3f &Scene::getBoundingBox() const {
     return m_accel->getBoundingBox();
+}
+
+std::vector<const Emitter*> Scene::get_emitterMedia() const {
+    std::vector<const Emitter*> res;
+    res.clear();
+    for (auto it = volumeMedia.begin(); it != volumeMedia.end(); ++it) {
+        const Emitter* emitter = it->second->getEmitter();
+        if (emitter)
+            res.push_back(emitter);
+    }
+    return res;
 }
 
 std::string Scene::toString() const {

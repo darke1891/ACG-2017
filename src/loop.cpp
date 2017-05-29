@@ -51,6 +51,11 @@ public:
                 dpdf.append(1.0f);
                 emitters.push_back(sbox->getEmitter());
             }
+        std::vector<const Emitter*> volumeEmitters = scene->get_emitterMedia();
+        for (auto it = volumeEmitters.begin(); it != volumeEmitters.end(); ++it) {
+            dpdf.append(1.0f);
+            emitters.push_back(*it);
+        }
         float light_sum = dpdf.normalize();
 
         while (true) {
@@ -99,7 +104,8 @@ public:
                     emitter = emitters[emitter_id];
 
                     Point2f sample = sampler->next2D(2);
-                    EmitterSample emitter_sample = emitter->sample(sample);
+                    float sample2 = sampler->next1D();
+                    EmitterSample emitter_sample = emitter->sample(sample, sample2);
                     Vector3f d = emitter_sample.point - its.p;
                     Vector3f d_norm;
                     float dis = d.norm();

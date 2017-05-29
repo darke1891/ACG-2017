@@ -27,6 +27,7 @@
 NORI_NAMESPACE_BEGIN
 
 struct Intersection;
+class VolumeSurface;
 
 /**
  * \brief Triangle mesh

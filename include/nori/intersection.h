@@ -26,6 +26,8 @@
 
 NORI_NAMESPACE_BEGIN
 
+class VolumeMedia;
+
 /**
  * \brief Intersection data structure
  *
@@ -49,14 +51,12 @@ struct Intersection {
     const Mesh *mesh;
 
     const SceneBox *sbox;
-
-    const Emitter *m_emitter;
-    const BSDF *m_bsdf;
+    const VolumeMedia *m_media;
 
     bool is_surface;
 
     /// Create an uninitialized intersection record
-    Intersection() : mesh(nullptr), sbox(nullptr), m_emitter(nullptr), m_bsdf(nullptr), is_surface(true) { }
+    Intersection() : mesh(nullptr), sbox(nullptr), m_media(nullptr), is_surface(true) { }
 
     /// Transform a direction vector into the local shading frame
     Vector3f toLocal(const Vector3f &d) const {

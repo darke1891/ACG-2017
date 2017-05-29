@@ -19,9 +19,11 @@
 #pragma once
 
 #include <map>
+#include <vector>
 #include <nori/accel.h>
 #include <nori/scenebox.h>
 #include <nori/volumemedia.h>
+#include <nori/emitter.h>
 
 NORI_NAMESPACE_BEGIN
 
@@ -114,6 +116,8 @@ public:
     EClassType getClassType() const { return EScene; }
 
     const SceneBox *get_scenebox() const {return m_box;}
+    std::vector<const Emitter*> get_emitterMedia() const;
+
 private:
     std::vector<Mesh *> m_meshes;
     Integrator *m_integrator = nullptr;

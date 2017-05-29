@@ -67,6 +67,7 @@ add_executable(nori
   include/nori/intersection.h
   include/nori/volumemedia.h
   include/nori/volumesurface.h
+  include/nori/volumeemitterhetero.h
 
   # Source code files
   src/bitmap.cpp
@@ -109,6 +110,8 @@ add_executable(nori
   src/volumemediavacuum.cpp
   src/halton.cpp
   src/bidiffuse.cpp
+  src/volumemediahetero.cpp
+  src/volumeemitterhetero.cpp
 )
 
 add_definitions(${NANOGUI_EXTRA_DEFS})

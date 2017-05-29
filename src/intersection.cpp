@@ -27,7 +27,7 @@ const Emitter *Intersection::getEmitter() const {
     else if (sbox)
         return sbox->getEmitter();
     else
-        return m_emitter;
+        return m_media->getEmitter();
 }
 
 /// Return a pointer to the BSDF associated with this mesh
@@ -37,7 +37,7 @@ const BSDF *Intersection::getBSDF() const {
     if (sbox)
         return sbox->getBSDF();
     else
-        return m_bsdf;
+        return m_media->getBSDF();
 }
 
 std::string Intersection::toString() const {

@@ -21,6 +21,8 @@
 #include <nori/object.h>
 #include <nori/sampler.h>
 #include <nori/bsdf.h>
+#include <nori/emitter.h>
+#include <nori/ray.h>
 
 NORI_NAMESPACE_BEGIN
 
@@ -28,8 +30,9 @@ class VolumeMedia : public NoriObject {
 public:
     EClassType getClassType() const { return EVolumeMedia; }
     virtual std::string getName() const = 0;
-    virtual float sample_dis(Sampler* sampler) const = 0;
-    virtual BSDF* getBSDF(Point3f &p) const = 0;
+    virtual float sample_dis(const Ray3f &ray, float t, Sampler* sampler) const = 0;
+    virtual BSDF* getBSDF() const = 0;
+    virtual Emitter* getEmitter() const = 0;
 };
 
 NORI_NAMESPACE_END

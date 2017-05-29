@@ -2,7 +2,7 @@
 
 <scene>
 	<integrator type="loop">
-		<integer name="shadow sample" value="8"/>
+		<integer name="shadow sample" value="1"/>
 	</integrator>
 
 	<camera type="perspective">
@@ -16,8 +16,8 @@
 		<integer name="width" value="800"/>
 	</camera>
 	
-	<sampler type="halton">
-		<integer name="sampleCount" value="1024"/>
+	<sampler type="independent">
+		<integer name="sampleCount" value="4"/>
 	</sampler>
 
 	<mesh type="obj">
@@ -45,9 +45,15 @@
 	</mesh>
 
 	<mesh type="obj">
-		<string name="filename" value="meshes/sphere1.obj"/>
+		<string name="filename" value="meshes/test.obj"/>
+        <transform name="toWorld">
+            <matrix value="0.000353, 0, 0.000353, 0,
+            	0, 0.0005, 0, -0.15,
+            	0.000353, 0, -0.000353, 0,
+            	0, 0, 0, 1.0"/>
+        </transform>
 
-		<bsdf type="mirror"/>
+		<bsdf type="bidiffuse"/>
 	</mesh>
 
 	<mesh type="obj">
