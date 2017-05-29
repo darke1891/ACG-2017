@@ -3,6 +3,12 @@
 NORI_NAMESPACE_BEGIN
 
 HierarchicalSampler::HierarchicalSampler () {
+    m_max = 100.0f;
+    layers.clear();
+}
+
+HierarchicalSampler::HierarchicalSampler (float max_light) {
+    m_max = max_light;
     layers.clear();
 }
 
@@ -18,6 +24,10 @@ void HierarchicalSampler::setImage(const std::string &file_name) {
             color += c.x();
             color += c.y();
             color += c.z();
+            if (color > m_max) {
+                bitmap.coeffRef(y, x) *= m_max / color;
+                color = m_max;
+            }
             layers[0].coeffRef(y,x) = color;
         }
     mean_light = layers[0].mean();

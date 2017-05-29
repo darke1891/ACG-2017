@@ -9,6 +9,7 @@ NORI_NAMESPACE_BEGIN
 class HierarchicalSampler {
 public:
     HierarchicalSampler ();
+    HierarchicalSampler (float max_light);
     void setImage(const std::string &file_name);
     float squareToHierarchicalPdf(const Point2f &p);
     Point2f squareToHierarchical(Point2f sample);
@@ -21,6 +22,7 @@ private:
     std::vector<hieImage> layers;
     hieImage for_pdf;
     Bitmap bitmap;
+    float m_max;
 };
 
 NORI_NAMESPACE_END

@@ -113,6 +113,7 @@ add_executable(nori
   src/volumemediahetero.cpp
   src/volumeemitterhetero.cpp
   src/river.cpp
+  src/bimicrofacet.cpp
 )
 
 add_definitions(${NANOGUI_EXTRA_DEFS})

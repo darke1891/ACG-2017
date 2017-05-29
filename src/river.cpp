@@ -84,6 +84,13 @@ public:
         return true;
     }
 
+    bool isDiffuse(Point2f &p) const {
+        if (p.x() < reflect)
+            return false;
+        else
+            return true;
+    }
+
     std::string toString() const {
         return tfm::format(
             "Bidiffuse[\n"

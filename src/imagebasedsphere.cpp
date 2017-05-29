@@ -23,6 +23,7 @@ private:
     Point3f center;
     float radius;
     float scale;
+    float max_light;
     HierarchicalSampler *hSampler = nullptr;
 };
 
@@ -43,12 +44,14 @@ private:
     BSDF *m_bsdf = nullptr;
     Point3f center;
     float radius;
+    float max_light;
     ImageBasedSphereEmitter *m_emitter;
 };
 
 ImageBasedSphere::ImageBasedSphere(const PropertyList &props) {
     center = props.getPoint("center");
     radius = props.getFloat("radius");
+    max_light = props.getFloat("max_light");
     std::string file_name = props.getString("light-image", "");
     if (file_name != "") {
         m_emitter = new ImageBasedSphereEmitter(props);
@@ -111,8 +114,9 @@ ImageBasedSphereEmitter::ImageBasedSphereEmitter(const PropertyList &props) {
     center = props.getPoint("center");
     radius = props.getFloat("radius");
     scale = props.getFloat("scale", 1.0f);
+    max_light = props.getFloat("max_light");
     std::string file_name = props.getString("light-image", "");
-    hSampler = new HierarchicalSampler();
+    hSampler = new HierarchicalSampler(max_light);
     hSampler->setImage(file_name);
 }
 

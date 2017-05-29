@@ -162,7 +162,7 @@ public:
                     Color3f re_color = bsdf->sample(bRec, re_sample);
                     if (re_color.maxValue() > Epsilon) {
                         m_ray = Ray3f(its.p, its.shFrame.toWorld(bRec.wo));
-                        is_diffuse = bsdf->isDiffuse();
+                        is_diffuse = bsdf->isDiffuse(re_sample);
                         p_bsdf = bsdf->pdf(bRec);
                         if (is_diffuse)
                             jump++;

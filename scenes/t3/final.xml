@@ -9,7 +9,7 @@
 		<float name="fov" value="40"/>
 		<transform name="toWorld">
 			<scale value="1,1,1"/>
-			<lookat target="0, 0.6, 0" origin="2, 1, 5" up="0, 1, 0"/>
+			<lookat target="0, 0.6, 0" origin="-1, 0.8, 6.5" up="0, 1, 0"/>
 		</transform>
 
 		<integer name="height" value="600"/>
@@ -17,14 +17,14 @@
 	</camera>
 	
 	<sampler type="independent">
-		<integer name="sampleCount" value="4"/>
+		<integer name="sampleCount" value="2"/>
 	</sampler>
 
 	<mesh type="obj">
 		<string name="filename" value="meshes/river.obj"/>
 
 		<bsdf type="river">
-			<color name="albedo" value="0.725 0.71 0.68"/>
+			<color name="albedo" value="0.188 0.914 0.953"/>
 			<float name="reflect" value="0.5"/>
 		</bsdf>
 	</mesh>
@@ -32,7 +32,11 @@
 	<mesh type="obj">
 		<string name="filename" value="meshes/boat_half.obj"/>
 
-		<bsdf type="bidiffuse"/>
+		<bsdf type="bimicrofacet">
+			<color name="kd" value="0.431, 0.318, 0.118"/>
+			<float name="ks" value="0.3"/>
+			<float name="alpha" value="0.2"/>
+		</bsdf>
 
         <transform name="local">
 	        <matrix value="0.02, 0, 0, 0,
@@ -41,9 +45,9 @@
 	        	0, 0, 0, 1.0"/>
 	    </transform>
         <transform name="toWorld">
-            <matrix value="-0.809, 0, -0.588, 1,
+            <matrix value="-1, 0, 0, 0,
             	0, 1, 0, 0,
-            	0.588, 0, -0.809, 1,
+            	0, 0, -1, 3,
             	0, 0, 0, 1.0"/>
         </transform>
 		<volumesurface type="volumesurfaceN">
@@ -61,9 +65,9 @@
 	        	0, 0, 0, 1.0"/>
 	    </transform>
         <transform name="toWorld">
-            <matrix value="-0.809, 0, -0.588, 1,
+            <matrix value="-1, 0, 0, 0,
             	0, 1, 0, 0,
-            	0.588, 0, -0.809, 1,
+            	0, 0, -1, 3,
             	0, 0, 0, 1.0"/>
         </transform>
 		<volumesurface type="volumesurfaceN">
@@ -76,9 +80,9 @@
 		<float name="albedo" value="0.1"/>
 		<float name="theta_t" value="10.0"/>
         <transform name="toWorld">
-            <matrix value="-0.809, 0, -0.588, 1,
+            <matrix value="-1, 0, 0, 0,
             	0, 1, 0, 0,
-            	0.588, 0, -0.809, 1,
+            	0, 0, -1, 3,
             	0, 0, 0, 1.0"/>
         </transform>
         <transform name="local">
@@ -90,14 +94,15 @@
 	    <string name="density" value="voxel/density.voxel"/>
 	    <string name="flame" value="voxel/flame.voxel"/>
 	    <string name="heat" value="voxel/heat.voxel"/>
-	 	<color name="radiance" value="2 2 2"/>
+	 	<color name="radiance" value="1 1 1"/>
 	</volumemedia>
 
 	<scenebox type="image-based-sphere">
 		<point name="center" value="0, 0, 0"/>
 		<float name="radius" value="10.0"/>
-		<string name="light-image" value="meshes/glacier-small.exr"/>
-		<float name="scale" value="0.8"/>
+		<string name="light-image" value="meshes/mountains-small.exr"/>
+		<float name="max_light" value="10"/>
+		<float name="scale" value="0.5"/>
 	</scenebox>
 
 </scene>

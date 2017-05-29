@@ -120,6 +120,9 @@ public:
      * or not to store photons on a surface
      */
     virtual bool isDiffuse() const { return false; }
+    virtual bool isDiffuse(Point2f &p) const {
+        return isDiffuse();
+    }
 };
 
 NORI_NAMESPACE_END
