@@ -39,9 +39,9 @@ void VolumeSurface::activate(std::map<std::string, const VolumeMedia*> &volumeMe
 
 const VolumeMedia *VolumeSurface::dirMedia(Vector3f wi) const {
     if (Frame::cosTheta(wi) <= 0.0f)
-        return m_extMedia;
-    else
         return m_intMedia;
+    else
+        return m_extMedia;
 }
 
 std::string VolumeSurface::toString() const {

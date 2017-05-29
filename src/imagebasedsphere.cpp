@@ -116,7 +116,7 @@ ImageBasedSphereEmitter::ImageBasedSphereEmitter(const PropertyList &props) {
     scale = props.getFloat("scale", 1.0f);
     max_light = props.getFloat("max_light");
     std::string file_name = props.getString("light-image", "");
-    hSampler = new HierarchicalSampler(max_light);
+    hSampler = new HierarchicalSampler(max_light / scale);
     hSampler->setImage(file_name);
 }
 

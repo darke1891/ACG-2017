@@ -2,14 +2,14 @@
 
 <scene>
 	<integrator type="loop">
-		<integer name="shadow sample" value="1"/>
+		<integer name="shadow sample" value="2"/>
 	</integrator>
 
 	<camera type="perspective">
 		<float name="fov" value="40"/>
 		<transform name="toWorld">
 			<scale value="1,1,1"/>
-			<lookat target="0, 0.6, 0" origin="-1, 0.8, 6.5" up="0, 1, 0"/>
+			<lookat target="0, 0.6, 0" origin="-1, 1.2, 7" up="0, 1, 0"/>
 		</transform>
 
 		<integer name="height" value="600"/>
@@ -17,7 +17,7 @@
 	</camera>
 	
 	<sampler type="independent">
-		<integer name="sampleCount" value="2"/>
+		<integer name="sampleCount" value="4"/>
 	</sampler>
 
 	<mesh type="obj">
@@ -51,8 +51,8 @@
             	0, 0, 0, 1.0"/>
         </transform>
 		<volumesurface type="volumesurfaceN">
-			<string name="intMedia" value="fog"/>
-			<string name="extMedia" value="fog"/>
+			<string name="intMedia" value="flame"/>
+			<string name="extMedia" value="flame"/>
 		</volumesurface>
 	</mesh>
 
@@ -71,12 +71,12 @@
             	0, 0, 0, 1.0"/>
         </transform>
 		<volumesurface type="volumesurfaceN">
-			<string name="intMedia" value="fog"/>
+			<string name="intMedia" value="flame"/>
 		</volumesurface>
 	</mesh>
 
 	<volumemedia type="volumemediahetero">
-		<string name="name" value="fog"/>
+		<string name="name" value="flame"/>
 		<float name="albedo" value="0.1"/>
 		<float name="theta_t" value="10.0"/>
         <transform name="toWorld">
@@ -99,10 +99,10 @@
 
 	<scenebox type="image-based-sphere">
 		<point name="center" value="0, 0, 0"/>
-		<float name="radius" value="10.0"/>
+		<float name="radius" value="20.0"/>
 		<string name="light-image" value="meshes/mountains-small.exr"/>
 		<float name="max_light" value="10"/>
-		<float name="scale" value="0.5"/>
+		<float name="scale" value="0.2"/>
 	</scenebox>
 
 </scene>

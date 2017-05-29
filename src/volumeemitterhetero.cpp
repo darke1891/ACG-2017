@@ -24,9 +24,9 @@ Color3f VolumeEmitterHetero::hit(Point3f p) const {
     r = radiance.r() * flame_value;
     g = radiance.g() * flame_value;
     b = radiance.b() * flame_value;
-    r *= std::max(std::min(heat_value * 100.0f - 100.0f, 1.0f), 0.0f);
-    g *= std::max(std::min(heat_value * 2.5f - 3.25f, 1.0f), 0.0f);
-    b *= std::max(std::min(heat_value * 5.0f - 7.5f, 1.0f), 0.0f);
+    r *= std::max(std::min(heat_value * 1.25f - 1.1f, 1.0f), 0.0f);
+    g *= std::max(std::min(heat_value * 2.5f - 2.8f, 1.0f), 0.0f);
+    b *= std::max(std::min(heat_value * 5.0f - 6.8f, 1.0f), 0.0f);
     return Color3f(r, g, b);
 }
 
@@ -43,8 +43,8 @@ EmitterSample VolumeEmitterHetero::sample(Point2f &p, float p2) const {
     EmitterSample res;
     Point3f pos = Point3f(p.x(), p.y(), p2);
     res.point = toWorld * pos;
-    res.radiance = hit(pos);
-    res.probability_density = get_pdf(pos);
+    res.radiance = hit(res.point);
+    res.probability_density = get_pdf(res.point);
     res.is_surface = false;
     return res;
 }

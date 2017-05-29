@@ -1,0 +1,418 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<scene>
+	<integrator type="loop">
+		<integer name="shadow sample" value="1"/>
+	</integrator>
+
+	<camera type="perspective">
+		<float name="fov" value="40"/>
+		<transform name="toWorld">
+			<scale value="1,1,1"/>
+			<lookat target="0, 0.6, 0" origin="-2, 0.8, 4" up="0, 1, 0"/>
+		</transform>
+
+		<integer name="height" value="600"/>
+		<integer name="width" value="800"/>
+	</camera>
+	
+	<sampler type="independent">
+		<integer name="sampleCount" value="8"/>
+	</sampler>
+
+	<mesh type="obj">
+		<string name="filename" value="meshes/river.obj"/>
+
+		<bsdf type="river">
+			<color name="albedo" value="0.188 0.914 0.953"/>
+			<float name="reflect" value="0.5"/>
+		</bsdf>
+	</mesh>
+
+	<scenebox type="image-based-sphere">
+		<point name="center" value="0, 0, 0"/>
+		<float name="radius" value="10.0"/>
+		<string name="light-image" value="meshes/mountains-small.exr"/>
+		<float name="max_light" value="10"/>
+		<float name="scale" value="0.5"/>
+	</scenebox>
+
+	<mesh type="obj">
+		<string name="filename" value="meshes/large_boat.obj"/>
+		<bsdf type="bimicrofacet">
+			<color name="kd" value="0.431, 0.318, 0.118"/>
+			<float name="ks" value="0.3"/>
+			<float name="alpha" value="0.2"/>
+		</bsdf>
+        <transform name="local">
+	        <matrix value="0.001, 0, 0, 0,
+	        	0, 0.001, 0, -0.25,
+	        	0, 0, 0.001, 0,
+	        	0, 0, 0, 1.0"/>
+	    </transform>
+        <transform name="toWorld">
+            <matrix value="-1, 0, 0, 0,
+            	0, 1, 0, 0,
+            	0, 0, -1, -6,
+            	0, 0, 0, 1.0"/>
+        </transform>
+	</mesh>
+
+	<mesh type="obj">
+		<string name="filename" value="meshes/large_boat.obj"/>
+		<bsdf type="bimicrofacet">
+			<color name="kd" value="0.431, 0.318, 0.118"/>
+			<float name="ks" value="0.3"/>
+			<float name="alpha" value="0.2"/>
+		</bsdf>
+        <transform name="local">
+	        <matrix value="0.001, 0, 0, 0,
+	        	0, 0.001, 0, -0.25,
+	        	0, 0, 0.001, 0,
+	        	0, 0, 0, 1.0"/>
+	    </transform>
+        <transform name="toWorld">
+            <matrix value="-1, 0, 0, -2,
+            	0, 1, 0, 0,
+            	0, 0, -1, -6,
+            	0, 0, 0, 1.0"/>
+        </transform>
+	</mesh>
+
+	<mesh type="obj">
+		<string name="filename" value="meshes/large_boat.obj"/>
+		<bsdf type="bimicrofacet">
+			<color name="kd" value="0.431, 0.318, 0.118"/>
+			<float name="ks" value="0.3"/>
+			<float name="alpha" value="0.2"/>
+		</bsdf>
+        <transform name="local">
+	        <matrix value="0.001, 0, 0, 0,
+	        	0, 0.001, 0, -0.25,
+	        	0, 0, 0.001, 0,
+	        	0, 0, 0, 1.0"/>
+	    </transform>
+        <transform name="toWorld">
+            <matrix value="-1, 0, 0, 2,
+            	0, 1, 0, 0,
+            	0, 0, -1, -6,
+            	0, 0, 0, 1.0"/>
+        </transform>
+	</mesh>
+
+	<mesh type="obj">
+		<string name="filename" value="meshes/large_boat.obj"/>
+		<bsdf type="bimicrofacet">
+			<color name="kd" value="0.431, 0.318, 0.118"/>
+			<float name="ks" value="0.3"/>
+			<float name="alpha" value="0.2"/>
+		</bsdf>
+        <transform name="local">
+	        <matrix value="0.001, 0, 0, 0,
+	        	0, 0.001, 0, -0.25,
+	        	0, 0, 0.001, 0,
+	        	0, 0, 0, 1.0"/>
+	    </transform>
+        <transform name="toWorld">
+            <matrix value="-1, 0, 0, 4,
+            	0, 1, 0, 0,
+            	0, 0, -1, -6,
+            	0, 0, 0, 1.0"/>
+        </transform>
+	</mesh>
+
+	<mesh type="obj">
+		<string name="filename" value="meshes/large_boat.obj"/>
+		<bsdf type="bimicrofacet">
+			<color name="kd" value="0.431, 0.318, 0.118"/>
+			<float name="ks" value="0.3"/>
+			<float name="alpha" value="0.2"/>
+		</bsdf>
+        <transform name="local">
+	        <matrix value="0.001, 0, 0, 0,
+	        	0, 0.001, 0, -0.25,
+	        	0, 0, 0.001, 0,
+	        	0, 0, 0, 1.0"/>
+	    </transform>
+        <transform name="toWorld">
+            <matrix value="-1, 0, 0, -4,
+            	0, 1, 0, 0,
+            	0, 0, -1, -6,
+            	0, 0, 0, 1.0"/>
+        </transform>
+	</mesh>
+
+	<mesh type="obj">
+		<string name="filename" value="meshes/large_boat.obj"/>
+		<bsdf type="bimicrofacet">
+			<color name="kd" value="0.431, 0.318, 0.118"/>
+			<float name="ks" value="0.3"/>
+			<float name="alpha" value="0.2"/>
+		</bsdf>
+        <transform name="local">
+	        <matrix value="0.001, 0, 0, 0,
+	        	0, 0.001, 0, -0.25,
+	        	0, 0, 0.001, 0,
+	        	0, 0, 0, 1.0"/>
+	    </transform>
+        <transform name="toWorld">
+            <matrix value="-1, 0, 0, 6,
+            	0, 1, 0, 0,
+            	0, 0, -1, -6,
+            	0, 0, 0, 1.0"/>
+        </transform>
+	</mesh>
+
+	<mesh type="obj">
+		<string name="filename" value="meshes/large_boat.obj"/>
+		<bsdf type="bimicrofacet">
+			<color name="kd" value="0.431, 0.318, 0.118"/>
+			<float name="ks" value="0.3"/>
+			<float name="alpha" value="0.2"/>
+		</bsdf>
+        <transform name="local">
+	        <matrix value="0.001, 0, 0, 0,
+	        	0, 0.001, 0, -0.25,
+	        	0, 0, 0.001, 0,
+	        	0, 0, 0, 1.0"/>
+	    </transform>
+        <transform name="toWorld">
+            <matrix value="-1, 0, 0, 1,
+            	0, 1, 0, 0,
+            	0, 0, -1, -9,
+            	0, 0, 0, 1.0"/>
+        </transform>
+	</mesh>
+
+	<mesh type="obj">
+		<string name="filename" value="meshes/large_boat.obj"/>
+		<bsdf type="bimicrofacet">
+			<color name="kd" value="0.431, 0.318, 0.118"/>
+			<float name="ks" value="0.3"/>
+			<float name="alpha" value="0.2"/>
+		</bsdf>
+        <transform name="local">
+	        <matrix value="0.001, 0, 0, 0,
+	        	0, 0.001, 0, -0.25,
+	        	0, 0, 0.001, 0,
+	        	0, 0, 0, 1.0"/>
+	    </transform>
+        <transform name="toWorld">
+            <matrix value="-1, 0, 0, -1,
+            	0, 1, 0, 0,
+            	0, 0, -1, -9,
+            	0, 0, 0, 1.0"/>
+        </transform>
+	</mesh>
+
+	<mesh type="obj">
+		<string name="filename" value="meshes/large_boat.obj"/>
+		<bsdf type="bimicrofacet">
+			<color name="kd" value="0.431, 0.318, 0.118"/>
+			<float name="ks" value="0.3"/>
+			<float name="alpha" value="0.2"/>
+		</bsdf>
+        <transform name="local">
+	        <matrix value="0.001, 0, 0, 0,
+	        	0, 0.001, 0, -0.25,
+	        	0, 0, 0.001, 0,
+	        	0, 0, 0, 1.0"/>
+	    </transform>
+        <transform name="toWorld">
+            <matrix value="-1, 0, 0, 3,
+            	0, 1, 0, 0,
+            	0, 0, -1, -9,
+            	0, 0, 0, 1.0"/>
+        </transform>
+	</mesh>
+
+	<mesh type="obj">
+		<string name="filename" value="meshes/large_boat.obj"/>
+		<bsdf type="bimicrofacet">
+			<color name="kd" value="0.431, 0.318, 0.118"/>
+			<float name="ks" value="0.3"/>
+			<float name="alpha" value="0.2"/>
+		</bsdf>
+        <transform name="local">
+	        <matrix value="0.001, 0, 0, 0,
+	        	0, 0.001, 0, -0.25,
+	        	0, 0, 0.001, 0,
+	        	0, 0, 0, 1.0"/>
+	    </transform>
+        <transform name="toWorld">
+            <matrix value="-1, 0, 0, -3,
+            	0, 1, 0, 0,
+            	0, 0, -1, -9,
+            	0, 0, 0, 1.0"/>
+        </transform>
+	</mesh>
+
+	<mesh type="obj">
+		<string name="filename" value="meshes/large_boat.obj"/>
+		<bsdf type="bimicrofacet">
+			<color name="kd" value="0.431, 0.318, 0.118"/>
+			<float name="ks" value="0.3"/>
+			<float name="alpha" value="0.2"/>
+		</bsdf>
+        <transform name="local">
+	        <matrix value="0.001, 0, 0, 0,
+	        	0, 0.001, 0, -0.25,
+	        	0, 0, 0.001, 0,
+	        	0, 0, 0, 1.0"/>
+	    </transform>
+        <transform name="toWorld">
+            <matrix value="-1, 0, 0, -5,
+            	0, 1, 0, 0,
+            	0, 0, -1, -9,
+            	0, 0, 0, 1.0"/>
+        </transform>
+	</mesh>
+
+	<mesh type="obj">
+		<string name="filename" value="meshes/large_boat.obj"/>
+		<bsdf type="bimicrofacet">
+			<color name="kd" value="0.431, 0.318, 0.118"/>
+			<float name="ks" value="0.3"/>
+			<float name="alpha" value="0.2"/>
+		</bsdf>
+        <transform name="local">
+	        <matrix value="0.001, 0, 0, 0,
+	        	0, 0.001, 0, -0.25,
+	        	0, 0, 0.001, 0,
+	        	0, 0, 0, 1.0"/>
+	    </transform>
+        <transform name="toWorld">
+            <matrix value="-1, 0, 0, -5,
+            	0, 1, 0, 0,
+            	0, 0, -1, -9,
+            	0, 0, 0, 1.0"/>
+        </transform>
+	</mesh>
+
+	<mesh type="obj">
+		<string name="filename" value="meshes/large_boat.obj"/>
+		<bsdf type="bimicrofacet">
+			<color name="kd" value="0.431, 0.318, 0.118"/>
+			<float name="ks" value="0.3"/>
+			<float name="alpha" value="0.2"/>
+		</bsdf>
+        <transform name="local">
+	        <matrix value="0.001, 0, 0, 0,
+	        	0, 0.001, 0, -0.25,
+	        	0, 0, 0.001, 0,
+	        	0, 0, 0, 1.0"/>
+	    </transform>
+        <transform name="toWorld">
+            <matrix value="-1, 0, 0, 0,
+            	0, 1, 0, 0,
+            	0, 0, -1, -12,
+            	0, 0, 0, 1.0"/>
+        </transform>
+	</mesh>
+
+	<mesh type="obj">
+		<string name="filename" value="meshes/large_boat.obj"/>
+		<bsdf type="bimicrofacet">
+			<color name="kd" value="0.431, 0.318, 0.118"/>
+			<float name="ks" value="0.3"/>
+			<float name="alpha" value="0.2"/>
+		</bsdf>
+        <transform name="local">
+	        <matrix value="0.001, 0, 0, 0,
+	        	0, 0.001, 0, -0.25,
+	        	0, 0, 0.001, 0,
+	        	0, 0, 0, 1.0"/>
+	    </transform>
+        <transform name="toWorld">
+            <matrix value="-1, 0, 0, -2,
+            	0, 1, 0, 0,
+            	0, 0, -1, -12,
+            	0, 0, 0, 1.0"/>
+        </transform>
+	</mesh>
+
+	<mesh type="obj">
+		<string name="filename" value="meshes/large_boat.obj"/>
+		<bsdf type="bimicrofacet">
+			<color name="kd" value="0.431, 0.318, 0.118"/>
+			<float name="ks" value="0.3"/>
+			<float name="alpha" value="0.2"/>
+		</bsdf>
+        <transform name="local">
+	        <matrix value="0.001, 0, 0, 0,
+	        	0, 0.001, 0, -0.25,
+	        	0, 0, 0.001, 0,
+	        	0, 0, 0, 1.0"/>
+	    </transform>
+        <transform name="toWorld">
+            <matrix value="-1, 0, 0, 2,
+            	0, 1, 0, 0,
+            	0, 0, -1, -12,
+            	0, 0, 0, 1.0"/>
+        </transform>
+	</mesh>
+
+	<mesh type="obj">
+		<string name="filename" value="meshes/large_boat.obj"/>
+		<bsdf type="bimicrofacet">
+			<color name="kd" value="0.431, 0.318, 0.118"/>
+			<float name="ks" value="0.3"/>
+			<float name="alpha" value="0.2"/>
+		</bsdf>
+        <transform name="local">
+	        <matrix value="0.001, 0, 0, 0,
+	        	0, 0.001, 0, -0.25,
+	        	0, 0, 0.001, 0,
+	        	0, 0, 0, 1.0"/>
+	    </transform>
+        <transform name="toWorld">
+            <matrix value="-1, 0, 0, 4,
+            	0, 1, 0, 0,
+            	0, 0, -1, -12,
+            	0, 0, 0, 1.0"/>
+        </transform>
+	</mesh>
+
+	<mesh type="obj">
+		<string name="filename" value="meshes/large_boat.obj"/>
+		<bsdf type="bimicrofacet">
+			<color name="kd" value="0.431, 0.318, 0.118"/>
+			<float name="ks" value="0.3"/>
+			<float name="alpha" value="0.2"/>
+		</bsdf>
+        <transform name="local">
+	        <matrix value="0.001, 0, 0, 0,
+	        	0, 0.001, 0, -0.25,
+	        	0, 0, 0.001, 0,
+	        	0, 0, 0, 1.0"/>
+	    </transform>
+        <transform name="toWorld">
+            <matrix value="-1, 0, 0, -4,
+            	0, 1, 0, 0,
+            	0, 0, -1, -12,
+            	0, 0, 0, 1.0"/>
+        </transform>
+	</mesh>
+
+	<mesh type="obj">
+		<string name="filename" value="meshes/large_boat.obj"/>
+		<bsdf type="bimicrofacet">
+			<color name="kd" value="0.431, 0.318, 0.118"/>
+			<float name="ks" value="0.3"/>
+			<float name="alpha" value="0.2"/>
+		</bsdf>
+        <transform name="local">
+	        <matrix value="0.001, 0, 0, 0,
+	        	0, 0.001, 0, -0.25,
+	        	0, 0, 0.001, 0,
+	        	0, 0, 0, 1.0"/>
+	    </transform>
+        <transform name="toWorld">
+            <matrix value="-1, 0, 0, 6,
+            	0, 1, 0, 0,
+            	0, 0, -1, -12,
+            	0, 0, 0, 1.0"/>
+        </transform>
+	</mesh>
+
+</scene>
