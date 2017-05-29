@@ -7,6 +7,8 @@ NORI_NAMESPACE_BEGIN
 
 struct VolumeHeteroFlameData {
     Transform toWorld, toLocal;
+    float*** density = nullptr;
+    int* density_index = nullptr;
     float*** flame = nullptr;
     int* flame_index = nullptr;
     float*** heat = nullptr;
@@ -32,6 +34,8 @@ public:
 private:
     Color3f radiance;
     Transform toWorld, toLocal;
+    float*** density = nullptr;
+    int* density_index = nullptr;
     float*** flame = nullptr;
     int* flame_index = nullptr;
     float*** heat = nullptr;

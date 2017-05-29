@@ -36,16 +36,15 @@ public:
         toWorld = toWorld * local_transform;
         toLocal = toWorld.inverse();
         density_file = props.getString("density");
-        density_scale = props.getFloat("density_scale", 1.0f);
         heat_file = props.getString("heat");
-        heat_scale = props.getFloat("heat_scale", 1.0f);
         flame_file = props.getString("flame");
-        flame_scale = props.getFloat("flame_scale", 1.0f);
         read_data();
 
         VolumeHeteroFlameData flameData;
         flameData.toWorld = toWorld;
         flameData.toLocal = toLocal;
+        flameData.density = density;
+        flameData.density_index = density_index;
         flameData.flame = flame;
         flameData.flame_index = flame_index;
         flameData.heat = heat;
@@ -63,7 +62,7 @@ public:
     }
 
     void read_data();
-    void read_data(std::string filename, float*** &data, int* &data_index, float scale);
+    void read_data(std::string filename, float*** &data, int* &data_index);
     void release_data(float*** &data, int* &data_index);
 
     std::string getName() const{
@@ -132,13 +131,10 @@ private:
     std::string density_file;
     std::string flame_file;
     std::string heat_file;
-    float density_scale;
-    float flame_scale;
-    float heat_scale;
     Emitter* m_emitter = nullptr;
 };
 
-void VolumeMediaHetero::read_data(std::string filename, float*** &data, int* &data_index, float scale) {
+void VolumeMediaHetero::read_data(std::string filename, float*** &data, int* &data_index) {
     std::ifstream fin(filename);
     data_index = new int[3];
     for (int i=0; i<3; i++) {
@@ -152,7 +148,6 @@ void VolumeMediaHetero::read_data(std::string filename, float*** &data, int* &da
             data[i][j] = new float[data_index[2]];
             for (int k=0; k<data_index[2]; k++) {
                 fin >> value;
-                value *= scale;
                 data[i][j][k] = value;
             }
         }
@@ -161,9 +156,9 @@ void VolumeMediaHetero::read_data(std::string filename, float*** &data, int* &da
 }
 
 void VolumeMediaHetero::read_data() {
-    read_data(density_file, density, density_index, density_scale);
-    read_data(flame_file, flame, flame_index, flame_scale);
-    read_data(heat_file, heat, heat_index, heat_scale);
+    read_data(density_file, density, density_index);
+    read_data(flame_file, flame, flame_index);
+    read_data(heat_file, heat, heat_index);
 }
 
 void VolumeMediaHetero::release_data(float*** &data, int* &data_index) {

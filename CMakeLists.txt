@@ -112,6 +112,7 @@ add_executable(nori
   src/bidiffuse.cpp
   src/volumemediahetero.cpp
   src/volumeemitterhetero.cpp
+  src/river.cpp
 )
 
 add_definitions(${NANOGUI_EXTRA_DEFS})
