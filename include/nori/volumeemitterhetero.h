@@ -19,6 +19,7 @@ class VolumeEmitterHetero : public Emitter {
 public:
     VolumeEmitterHetero(const PropertyList &props) {
         radiance = props.getColor("radiance");
+        probability_density = 1.0f;
     }
 
     void transfer_data(VolumeHeteroFlameData &flameData);
@@ -34,6 +35,7 @@ public:
 private:
     Color3f radiance;
     Transform toWorld, toLocal;
+    float probability_density;
     float*** density = nullptr;
     int* density_index = nullptr;
     float*** flame = nullptr;

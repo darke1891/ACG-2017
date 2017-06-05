@@ -3,13 +3,13 @@
 #SBATCH --nodes              1
 #SBATCH --ntasks             1
 #SBATCH --cpus-per-task      16
-#SBATCH --time 01:30:00
+#SBATCH --time 02:30:00
 
 source /ssoft/spack/bin/slmodules.sh
 
 module load gcc
 
-cd scenes/t3
+cd scenes/final
 
-srun ~/nori/build/nori final.xml
+srun ~/nori/build/nori final_2048.xml
 

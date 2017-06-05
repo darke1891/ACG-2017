@@ -1,4 +1,6 @@
 #include <nori/volumeemitterhetero.h>
+#include <Eigen/Dense>
+#include <Eigen/LU>
 
 NORI_NAMESPACE_BEGIN
 
@@ -24,14 +26,15 @@ Color3f VolumeEmitterHetero::hit(Point3f p) const {
     r = radiance.r() * flame_value;
     g = radiance.g() * flame_value;
     b = radiance.b() * flame_value;
-    r *= std::max(std::min(heat_value * 1.25f - 1.1f, 1.0f), 0.0f);
-    g *= std::max(std::min(heat_value * 2.5f - 2.8f, 1.0f), 0.0f);
-    b *= std::max(std::min(heat_value * 5.0f - 6.8f, 1.0f), 0.0f);
+    r *= std::max(std::min(heat_value, 1.0f), 0.0f);
+    g *= std::max(std::min(heat_value * 2.5f - 1.8f, 1.0f), 0.0f);
+    b *= std::max(std::min(heat_value * 5.0f - 5.8f, 1.0f), 0.0f);
+
     return Color3f(r, g, b);
 }
 
 float VolumeEmitterHetero::get_pdf(Point3f p) const {
-    return 1.0f;
+    return probability_density;
 }
 
 EmitterSample VolumeEmitterHetero::sample(Point2f &p) const {
@@ -58,6 +61,7 @@ void VolumeEmitterHetero::transfer_data(VolumeHeteroFlameData &flameData) {
     flame_index = flameData.flame_index;
     heat = flameData.heat;
     heat_index = flameData.heat_index;
+    probability_density = toLocal.getMatrix().block<3,3>(1, 1).determinant();
 }
 
 
